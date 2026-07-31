@@ -1,0 +1,297 @@
+"use client";
+
+import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CarFront, CheckCircle2, Phone, Send, Star, Wallet, XCircle, Clock3 } from "lucide-react";
+import { Avatar, Badge, Button, Card, Input, Modal, Spinner, Tabs, Textarea } from "@/components/ui";
+import { useDashboard } from "@/components/portal/useDashboard";
+import { api, useToast, type ApiData } from "@/lib/client";
+import { cn, dayLabel, formatINR, formatTime, greeting } from "@/lib/utils";
+import type { LessonNote } from "@/lib/db/types";
+
+export default function InstructorPortal() {
+  return (
+    <React.Suspense fallback={null}>
+      <InstructorPortalInner />
+    </React.Suspense>
+  );
+}
+
+function InstructorPortalInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") ?? "today";
+  const { data, loading, refresh } = useDashboard();
+  const toast = useToast();
+
+  const setTab = (t: string) => router.replace(`/portal/instructor${t === "today" ? "" : `?tab=${t}`}`);
+
+  const mark = async (bookingId: string, attendance: string) => {
+    try {
+      const res = await api<{ certificate?: string }>("/api/attendance", { method: "POST", body: JSON.stringify({ bookingId, attendance }) });
+      toast.push(`Marked ${attendance} ✅`);
+      if (res.certificate) toast.push("Student completed the course — certificate issued! 🎓");
+      refresh();
+    } catch (e: ApiData) {
+      toast.push(e.message, "error");
+    }
+  };
+
+  if (loading || !data) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner className="size-8" />
+      </div>
+    );
+  }
+
+  const TABS = [
+    { id: "today", label: `Today (${data.today?.length ?? 0})` },
+    { id: "upcoming", label: "Upcoming" },
+    { id: "students", label: "My Students" },
+    { id: "earnings", label: "Earnings" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink-900">
+            {greeting()}, {data.profile.name.split(" ")[0]}! 🚗
+          </h1>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-500">
+            <Star className="size-4 text-brand-500" fill="currentColor" /> {data.profile.rating?.toFixed(1)} · {data.profile.reviewCount} reviews · {data.profile.yearsExp} yrs experience
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm card-shadow">
+            <Wallet className="size-4 text-go-600" />
+            <span className="font-bold text-ink-900">{formatINR(data.earnings)}</span>
+            <span className="text-xs text-ink-400">this month</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm card-shadow">
+            <Clock3 className="size-4 text-brand-500" />
+            <span className="font-bold text-ink-900">{data.lessonsThisMonth}</span>
+            <span className="text-xs text-ink-400">lessons</span>
+          </div>
+        </div>
+      </div>
+
+      <Tabs tabs={TABS} active={tab} onChange={setTab} />
+
+      {tab === "today" && (
+        <TodayView data={data} onMark={mark} refresh={refresh} />
+      )}
+      {tab === "upcoming" && (
+        <div className="space-y-3">
+          {data.upcoming.map((b: ApiData) => (
+            <Card key={b.id} className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-4">
+                <Avatar name={b.student ?? "S"} size="md" />
+                <div>
+                  <p className="font-semibold text-ink-900">{b.student}</p>
+                  <p className="text-xs text-ink-500">{b.package}</p>
+                </div>
+              </div>
+              <div className="text-right text-sm">
+                <p className="font-semibold text-ink-800">{dayLabel(b.date)}</p>
+                <p className="text-xs text-ink-400">{formatTime(b.time)} · {b.vehicle}</p>
+              </div>
+            </Card>
+          ))}
+          {data.upcoming.length === 0 && <Card className="p-8 text-center text-sm text-ink-400">No upcoming lessons.</Card>}
+        </div>
+      )}
+      {tab === "students" && <StudentsView students={data.students} />}
+      {tab === "earnings" && <EarningsView data={data} />}
+    </div>
+  );
+}
+
+function TodayView({ data, onMark, refresh }: { data: ApiData; onMark: (id: string, a: string) => void; refresh: () => void }) {
+  const [noteFor, setNoteFor] = React.useState<ApiData | null>(null);
+  const toast = useToast();
+
+  const saveNote = async (n: Partial<LessonNote>) => {
+    await api("/api/notes", { method: "POST", body: JSON.stringify({ bookingId: noteFor.id, ...n }) });
+    toast.push("Note saved — student notified 💬");
+    setNoteFor(null);
+    refresh();
+  };
+
+  return (
+    <div className="space-y-4">
+      {data.today.length === 0 ? (
+        <Card className="p-10 text-center text-sm text-ink-400">You&apos;re free today! Enjoy the day off 🎉</Card>
+      ) : (
+        data.today.map((b: ApiData) => {
+          const done = b.status === "completed";
+          return (
+            <Card key={b.id} className="p-4 sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex size-12 flex-col items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
+                    <span className="font-display text-lg font-bold leading-none">{formatTime(b.time).split(" ")[0]}</span>
+                    <span className="text-[10px] font-semibold uppercase">{formatTime(b.time).split(" ")[1]}</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-display font-bold text-ink-900">{b.student}</p>
+                      <Badge tone={done ? "green" : "blue"} className="capitalize">{done ? b.attendance : "upcoming"}</Badge>
+                    </div>
+                    <p className="text-xs text-ink-500">{b.package} · {b.vehicle}</p>
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-ink-500">
+                      <a href={`tel:${b.studentPhone}`} className="inline-flex items-center gap-1 font-semibold text-go-600 hover:underline">
+                        <Phone className="size-3.5" /> {b.studentPhone}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {!done ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="success" onClick={() => onMark(b.id, "present")}>
+                      <CheckCircle2 className="size-3.5" /> Present
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-brand-600" onClick={() => onMark(b.id, "late")}>
+                      <Clock3 className="size-3.5" /> Late
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-stop-500" onClick={() => onMark(b.id, "absent")}>
+                      <XCircle className="size-3.5" /> Absent
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setNoteFor(b)}>
+                      <Send className="size-3.5" /> Add note
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => setNoteFor(b)}>
+                    <Send className="size-3.5" /> Add note
+                  </Button>
+                )}
+              </div>
+            </Card>
+          );
+        })
+      )}
+
+      <Modal open={!!noteFor} onClose={() => setNoteFor(null)} title={`Lesson note for ${noteFor?.student ?? ""}`}>
+        {noteFor && <NoteForm onSave={saveNote} />}
+      </Modal>
+    </div>
+  );
+}
+
+function NoteForm({ onSave }: { onSave: (n: ApiData) => void }) {
+  const [note, setNote] = React.useState("");
+  const [recommendation, setRecommendation] = React.useState("");
+  const [skills, setSkills] = React.useState<Record<string, boolean>>({});
+  const [busy, setBusy] = React.useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const skillDeltas: Record<string, number> = {};
+    Object.entries(skills).forEach(([k, v]) => {
+      if (v) skillDeltas[k] = 0.5;
+    });
+    await onSave({ note, recommendation, skillDeltas });
+  };
+
+  const SKILLS = ["steering", "parking", "reverse", "traffic", "hillStart", "highway", "nightDriving"];
+  const LABELS: Record<string, string> = { steering: "Steering", parking: "Parking", reverse: "Reverse", traffic: "Traffic", hillStart: "Hill start", highway: "Highway", nightDriving: "Night" };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <Textarea label="What happened in today's lesson?" rows={3} required value={note} onChange={(e) => setNote(e.target.value)} placeholder="Good clutch control today. Needs more practice on turns." />
+      <Input label="Recommended next focus" value={recommendation} onChange={(e) => setRecommendation(e.target.value)} placeholder="e.g. Reverse parking drill" />
+      <div>
+        <p className="mb-2 text-sm font-medium text-ink-700">Skills improved today</p>
+        <div className="flex flex-wrap gap-2">
+          {SKILLS.map((s) => (
+            <button
+              type="button"
+              key={s}
+              onClick={() => setSkills((x) => ({ ...x, [s]: !x[s] }))}
+              className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", skills[s] ? "border-go-500 bg-go-500 text-white" : "border-ink-200 bg-white text-ink-600")}
+            >
+              {LABELS[s]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Button type="submit" loading={busy} className="w-full">
+        Save note & notify student
+      </Button>
+    </form>
+  );
+}
+
+function StudentsView({ students }: { students: ApiData[] }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {students.map((s: ApiData) => (
+        <Card key={s.id} className="p-5">
+          <div className="flex items-center gap-3">
+            <Avatar name={s.name} size="md" />
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-ink-900">{s.name}</p>
+              <p className="text-xs text-ink-400">{s.studentId}</p>
+            </div>
+          </div>
+          <div className="mt-3 space-y-1.5 text-xs text-ink-500">
+            <p className="flex items-center gap-1.5">
+              <Phone className="size-3.5 text-brand-500" /> {s.phone}
+            </p>
+            {s.nextLesson ? (
+              <p className="flex items-center gap-1.5">
+                <CarFront className="size-3.5 text-go-600" /> Next: {dayLabel(s.nextLesson.date)} {formatTime(s.nextLesson.time)}
+              </p>
+            ) : (
+              <p className="text-ink-400">No upcoming lesson</p>
+            )}
+          </div>
+        </Card>
+      ))}
+      {students.length === 0 && <Card className="p-8 text-center text-sm text-ink-400">No active students yet.</Card>}
+    </div>
+  );
+}
+
+function EarningsView({ data }: { data: ApiData }) {
+  const att = data.attendance ?? {};
+  const total = Object.values(att).reduce((a: ApiData, b: ApiData) => a + b, 0) as number;
+  return (
+    <div className="grid gap-6 lg:grid-cols-3">
+      <Card className="p-5 lg:col-span-2">
+        <h3 className="font-display font-bold text-ink-900">Monthly summary</h3>
+        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+          {[
+            { label: "Lessons", value: data.lessonsThisMonth },
+            { label: "Attendance rate", value: total ? `${Math.round(((att.present ?? 0) / total) * 100)}%` : "—" },
+            { label: "Earnings", value: formatINR(data.earnings) },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-ink-50 p-4">
+              <p className="font-display text-xl font-bold text-ink-900">{s.value}</p>
+              <p className="text-xs text-ink-400">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs text-ink-400">
+          Earnings = {formatINR(data.profile.salaryPerLesson ?? 500)}/lesson + {data.profile.commissionPct}% commission on package payments. Payroll runs on the 1st of every month.
+        </p>
+      </Card>
+      <Card className="p-5">
+        <h3 className="font-display font-bold text-ink-900">Recent notes</h3>
+        <div className="mt-3 space-y-3">
+          {data.recentNotes.slice(0, 5).map((n: ApiData) => (
+            <div key={n.id} className="rounded-xl bg-ink-50 p-3 text-xs">
+              <p className="font-semibold text-ink-800">{new Date(n.date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+              <p className="mt-1 text-ink-500">&quot;{n.note}&quot;</p>
+            </div>
+          ))}
+          {data.recentNotes.length === 0 && <p className="text-sm text-ink-400">No notes yet.</p>}
+        </div>
+      </Card>
+    </div>
+  );
+}

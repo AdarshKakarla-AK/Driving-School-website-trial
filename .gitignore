@@ -13,6 +13,13 @@
 # testing
 /coverage
 
+# sqlite data
+/data/*.sqlite
+/data/*.sqlite-wal
+/data/*.sqlite-shm
+/data/backups/
+/data/secret.key
+
 # next.js
 /.next/
 /out/
