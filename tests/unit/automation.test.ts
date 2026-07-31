@@ -105,8 +105,9 @@ describe("lesson reminders", () => {
   it("reminds for confirmed lessons starting within 24 hours", () => {
     const db = cloneDb(makeSeed());
     upcomingBooking(db, {});
+    const now = Date.parse(`${futureDate(1)}T09:00:00`) - 2 * 60 * 60 * 1000;
 
-    expect(runLessonReminders(db)).toBe(1);
+    expect(runLessonReminders(db, 24, now)).toBe(1);
     expect(db.bookings[0].reminderSentAt).toBe("2026-06-15T08:00:00.000Z");
     expect(db.automationLogs[0].summary).toContain("Ravi Kumar");
     expect(db.automationLogs[0].summary).toContain(futureDate(1));
@@ -197,7 +198,7 @@ describe("runDueAutomations", () => {
       })(),
     });
 
-    const summary = runDueAutomations(db);
+    const summary = runDueAutomations(db, Date.parse(`${futureDate(1)}T09:00:00`) - 2 * 60 * 60 * 1000);
     expect(summary).toEqual({
       paymentReminders: 1,
       lessonReminders: 1,

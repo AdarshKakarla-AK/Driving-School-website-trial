@@ -38,9 +38,8 @@ export function runPaymentReminders(db: DB): number {
   return sent;
 }
 
-export function runLessonReminders(db: DB, hoursAhead = 24): number {
+export function runLessonReminders(db: DB, hoursAhead = 24, now: number = Date.now()): number {
   let sent = 0;
-  const now = Date.now();
   const horizon = now + hoursAhead * HOUR_MS;
   for (const booking of db.bookings) {
     if (booking.reminderSentAt) continue;
@@ -101,10 +100,10 @@ export function runBirthdayReminders(db: DB): number {
   return sent;
 }
 
-export function runDueAutomations(db: DB): AutomationRunSummary {
+export function runDueAutomations(db: DB, now: number = Date.now()): AutomationRunSummary {
   return {
     paymentReminders: runPaymentReminders(db),
-    lessonReminders: runLessonReminders(db),
+    lessonReminders: runLessonReminders(db, 24, now),
     licenseReminders: runLicenseReminders(db),
     birthdays: runBirthdayReminders(db),
   };
