@@ -2,7 +2,7 @@
 
 ## Architecture notes
 
-- **Data layer:** SQLite via Node's built-in `node:sqlite` (`DatabaseSync`), stored at `data/db.sqlite` (WAL mode, transactional writes, auto-migrated from the legacy `data/db.json`).
+- **Data layer:** SQLite via Node's built-in `node:sqlite` (`DatabaseSync`), stored at `data/db.sqlite` (WAL mode, transactional writes, auto-migrated from the legacy `data/db.json`). Collections are stored as per-row JSON; a stored `schema_version` is advanced on boot, and missing collection keys from older payloads are backfilled automatically — upgrades never drop data.
 - **Sessions:** signed HMAC cookie (`smds_session`). Secret comes from `SESSION_SECRET` or an auto-generated `data/secret.key`.
 - **Payments:** Razorpay. If `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are unset, the app runs in **demo mode** (fake orders, instant verification).
 - **Build:** `output: "standalone"` produces a self-contained server for Docker.
@@ -108,9 +108,18 @@ via Node's `fetch`. Expect the following `type` values (from the automation engi
 
 ## Health check
 
+The app exposes an unauthenticated health endpoint that probes the database and
+reports schema version, payment mode, and uptime:
+
 ```bash
-curl http://localhost:3000/api/public/site
+curl http://localhost:3000/api/health
+# {"ok":true,"service":"sri-mathru-driving-school","schemaVersion":1,
+#  "db":{"status":"ok","collections":20},"mode":"demo","uptimeSec":42,"time":"..."}
 ```
+
+It returns `200` when healthy and `503` if the database is unavailable — wire it
+into your load balancer or uptime monitor. Legacy fallback for simple checks:
+`curl http://localhost:3000/api/public/site`.
 
 ## Backups & restore
 

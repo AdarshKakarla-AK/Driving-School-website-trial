@@ -57,8 +57,7 @@ export function findSlot(db: DB, date: string, time: string, instructorId?: stri
     return candidates.find((s) => s.instructorId === instructorId) ?? null;
   }
   if (vehicleType && vehicleType !== "both") {
-    const match = candidates.find((s) => db.vehicles.find((v) => v.id === s.vehicleId)?.type === vehicleType);
-    if (match) return match;
+    return candidates.find((s) => db.vehicles.find((v) => v.id === s.vehicleId)?.type === vehicleType) ?? null;
   }
   return candidates[0] ?? null;
 }

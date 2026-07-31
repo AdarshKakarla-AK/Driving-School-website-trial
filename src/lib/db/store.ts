@@ -38,6 +38,10 @@ export function resetDB(): DB {
   return handle.reset(buildSeed);
 }
 
+export function getVersion(): number {
+  return handle.version();
+}
+
 export function uid(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }

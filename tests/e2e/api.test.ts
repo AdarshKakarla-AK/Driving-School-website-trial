@@ -121,6 +121,17 @@ describe("public endpoints", () => {
     expect(days[0].slots.length).toBeGreaterThan(0);
   });
 
+  it("serves a health check", async () => {
+    const res = await api("/api/health");
+    expect(res.status).toBe(200);
+    const h = res.json as { ok: boolean; schemaVersion: number; db: { status: string; collections: number }; mode: string };
+    expect(h.ok).toBe(true);
+    expect(h.schemaVersion).toBeGreaterThan(0);
+    expect(h.db.status).toBe("ok");
+    expect(h.db.collections).toBeGreaterThan(0);
+    expect(h.mode).toBe("demo");
+  });
+
   it("rejects a bogus certificate code", async () => {
     const res = await api("/api/certificates", { method: "POST", body: { code: "NOPE-123" } });
     expect(res.status).toBe(404);
@@ -170,6 +181,13 @@ describe("authentication", () => {
 
     const bad = await api("/api/auth/otp", { method: "POST", body: { action: "verify", identifier: phone, code: "000000" } });
     expect([400, 401, 404]).toContain(bad.status);
+  });
+
+  it("logs out and clears the session cookie", async () => {
+    const cookie = await login("rahul.sharma@gmail.com", "demo123");
+    const out = await api("/api/auth/logout", { method: "POST", cookie });
+    expect(out.status).toBe(200);
+    expect(out.setCookie ?? "").toContain("smds_session=");
   });
 });
 
@@ -418,6 +436,54 @@ describe("admin operations", () => {
 
     const del = await api("/api/admin/coupons", { method: "DELETE", cookie: admin, body: { id: coupon!.id } });
     expect(del.status).toBe(200);
+  });
+});
+
+describe("registration", () => {
+  it("registers a new student, signs them in, and rejects duplicates", async () => {
+    const res = await api("/api/auth/register", {
+      method: "POST",
+      body: { name: "E2E Student", phone: "7000000999", password: "e2e1234", source: "e2e" },
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as { ok: boolean }).ok).toBe(true);
+    expect(cookieOf(res)).toContain("smds_session");
+
+    const dup = await api("/api/auth/register", {
+      method: "POST",
+      body: { name: "E2E Student", phone: "7000000999", password: "e2e1234" },
+    });
+    expect(dup.status).toBe(409);
+
+    const bad = await api("/api/auth/register", {
+      method: "POST",
+      body: { name: "X", phone: "123", password: "pw" },
+    });
+    expect(bad.status).toBe(400);
+  });
+});
+
+describe("notifications", () => {
+  it("records booking notifications and supports mark-all-read", async () => {
+    const student = await login("priya.nair@gmail.com", "demo123");
+    const av = await api("/api/availability?days=14");
+    const days = (av.json as { days: { date: string; slots: { time: string; status: string }[] }[] }).days;
+    const open = days.slice(2).flatMap((d) => d.slots.filter((s) => s.status === "available").map((s) => ({ date: d.date, time: s.time })));
+    expect(open.length).toBeGreaterThan(0);
+
+    const book = await api("/api/bookings", { method: "POST", cookie: student, body: open[0] });
+    expect(book.status).toBe(200);
+
+    const list = await api("/api/notifications", { cookie: student });
+    expect(list.status).toBe(200);
+    const payload = list.json as { notifications: { title: string; read: boolean }[]; unread: number };
+    expect(payload.notifications.some((n) => /Lesson Booked/.test(n.title))).toBe(true);
+
+    const mark = await api("/api/notifications", { method: "POST", cookie: student, body: { all: true } });
+    expect(mark.status).toBe(200);
+
+    const after = await api("/api/notifications", { cookie: student });
+    expect((after.json as { unread: number }).unread).toBe(0);
   });
 });
 

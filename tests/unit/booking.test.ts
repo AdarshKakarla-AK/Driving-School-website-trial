@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { makeSeed, seedIds, futureDate } from "../helpers/seed";
-import { createBooking, cancelBooking, rescheduleBooking, joinWaitingList, getAvailability } from "@/lib/booking";
+import { createBooking, cancelBooking, rescheduleBooking, joinWaitingList, getAvailability, findSlot, bookingIsPast } from "@/lib/booking";
 
 describe("booking", () => {
   it("creates a pending_payment booking and marks the slot booked", () => {
@@ -108,5 +108,66 @@ describe("booking", () => {
     expect(availability).toHaveLength(14);
     const day = availability.find((d) => d.date === futureDate(3))!;
     expect(day.slots.some((s) => s.time === "09:00" && s.status === "available")).toBe(true);
+  });
+
+  it("findSlot filters by instructor", () => {
+    const db = makeSeed();
+    const date = futureDate(3);
+    expect(findSlot(db, date, "09:00", "ins_1")?.id).toBe("slot_1");
+    expect(findSlot(db, date, "09:00", "nobody")).toBeNull();
+  });
+
+  it("findSlot filters by vehicle type", () => {
+    const db = makeSeed();
+    const date = futureDate(3);
+    expect(findSlot(db, date, "09:00", undefined, "automatic")?.id).toBe("slot_1");
+    expect(findSlot(db, date, "09:00", undefined, "manual")).toBeNull();
+  });
+
+  it("createBooking rejects an unknown student", () => {
+    const db = makeSeed();
+    const { error } = createBooking(db, { studentId: "nope", date: futureDate(3), time: "09:00" });
+    expect(error).toBe("Student not found.");
+  });
+
+  it("cancelBooking returns an error for a missing booking", () => {
+    expect(cancelBooking(makeSeed(), "nope").error).toBe("Booking not found.");
+  });
+
+  it("cancelBooking rejects an already-cancelled booking", () => {
+    const db = makeSeed();
+    const date = futureDate(3);
+    const { booking } = createBooking(db, { studentId: seedIds.student1, date, time: "09:00" });
+    cancelBooking(db, booking!.id);
+    expect(cancelBooking(db, booking!.id).error).toBe("This booking can't be cancelled.");
+  });
+
+  it("rescheduleBooking rejects a missing booking", () => {
+    expect(rescheduleBooking(makeSeed(), "nope", futureDate(5), "10:00").error).toBe("Booking not found.");
+  });
+
+  it("rescheduleBooking rejects a past date", () => {
+    const db = makeSeed();
+    const date = futureDate(3);
+    const { booking } = createBooking(db, { studentId: seedIds.student1, date, time: "09:00" });
+    expect(rescheduleBooking(db, booking!.id, "2020-01-01", "10:00").error).toBe("Cannot move to a past slot.");
+  });
+
+  it("rescheduleBooking rejects an unavailable slot", () => {
+    const db = makeSeed();
+    const date = futureDate(3);
+    const { booking } = createBooking(db, { studentId: seedIds.student1, date, time: "09:00" });
+    db.slots.forEach((s) => {
+      if (s.time === "10:00") s.status = "blocked";
+    });
+    expect(rescheduleBooking(db, booking!.id, date, "10:00").error).toBe("Selected slot is not available.");
+  });
+
+  it("bookingIsPast reports on past dates", () => {
+    const db = makeSeed();
+    const past = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const { booking } = createBooking(db, { studentId: seedIds.student1, date: futureDate(3), time: "09:00" });
+    expect(bookingIsPast(booking!)).toBe(false);
+    expect(bookingIsPast({ ...booking!, date: past })).toBe(true);
   });
 });

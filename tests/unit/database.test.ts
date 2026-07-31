@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { openDatabase } from "@/lib/db/database";
+import { openDatabase, SCHEMA_VERSION } from "@/lib/db/database";
 import type { DB, Settings, User, Lead, Booking } from "@/lib/db/types";
 
 const tmpDirs: string[] = [];
@@ -237,5 +237,38 @@ describe("openDatabase (SQLite persistence)", () => {
     const parsed = JSON.parse(leadRow.value) as Array<{ id: string }>;
     inspect.close();
     expect(parsed.some((l) => l.id === "lead_pc")).toBe(true);
+  });
+
+  it("records the current schema version on first open and preserves it", () => {
+    const file = path.join(tempDir(), "ver.sqlite");
+    const db = openDatabase({ file, seed: cheapSeed });
+    expect(db.version()).toBe(SCHEMA_VERSION);
+    db.close();
+
+    const inspect = new DatabaseSync(file);
+    const row = inspect.prepare("SELECT value FROM meta WHERE key = ?").get("schema_version") as { value: string } | undefined;
+    inspect.close();
+    expect(Number(row?.value)).toBe(SCHEMA_VERSION);
+
+    const reopened = openDatabase({ file, seed: cheapSeed });
+    expect(reopened.version()).toBe(SCHEMA_VERSION);
+    reopened.close();
+  });
+
+  it("backfills missing collections from an older payload instead of reseeding", () => {
+    const dir = tempDir();
+    const jsonFile = path.join(dir, "db.json");
+    const legacy = cheapSeed();
+    legacy.leads.push({ id: "lead_custom", name: "Custom", phone: "1", source: "walkin", status: "new", notes: [], createdAt: new Date().toISOString() });
+    delete (legacy as unknown as Record<string, unknown>).coupons;
+    delete (legacy as unknown as Record<string, unknown>).auditLogs;
+    fs.writeFileSync(jsonFile, JSON.stringify(legacy));
+
+    const file = path.join(dir, "backfill.sqlite");
+    const db = openDatabase({ file, seed: cheapSeed, importJson: jsonFile });
+    expect(db.get().coupons).toEqual([]);
+    expect(db.get().auditLogs).toEqual([]);
+    expect(db.get().leads.some((l) => l.id === "lead_custom")).toBe(true);
+    db.close();
   });
 });

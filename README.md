@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sri Mathru Driving School
 
-## Getting Started
+A full-featured driving school management platform — public marketing site, student portal, instructor tools, and an admin back office — built with Next.js 16 (App Router) and SQLite.
 
-First, run the development server:
+[![CI](https://github.com/AdarshKakarla-AK/Driving-School-website-trial/actions/workflows/ci.yml/badge.svg)](https://github.com/AdarshKakarla-AK/Driving-School-website-trial/actions/workflows/ci.yml)
+
+## Features
+
+- **Public site** — courses & packages, instructors, testimonials, FAQ, chat widget, contact & lead capture, certificate verification.
+- **Booking & scheduling** — 14-day rolling slot window (Sundays off), availability by instructor/vehicle type, bookings, reschedules, cancellations with policy-based fees, waitlist auto-notify.
+- **Payments** — Razorpay integration with full & EMI plans, invoices with GST, coupons. Runs in **demo mode** (fake orders, instant verify) when Razorpay keys are absent.
+- **Student portal** — dashboard, bookings, payments, lesson progress tracking, documents, certificates, reviews, notifications.
+- **Admin portal** — overview & analytics, CRM (students & leads), bookings, finance (expenses, payroll), coupons, vehicles, automation & broadcast, settings.
+- **Automation & notifications** — in-app inbox + optional WhatsApp/email webhooks (fire-and-forget, never block requests). See `DEPLOYMENT.md` for the webhook contract.
+- **SQLite persistence** — per-collection JSON storage with WAL mode, transaction-safe writes, automatic schema migrations & collection backfill, legacy `db.json` auto-import, and a backup/restore toolchain.
+
+## Tech stack
+
+Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · node:sqlite (native) · Razorpay · Vitest + Testing Library
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. Demo accounts (seeded on first boot):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Role       | Login                    | Password  |
+| ---------- | ------------------------ | --------- |
+| Admin      | `admin@srimathru.in`     | `admin123`|
+| Instructor | `ravi@srimathru.in`      | `demo123` |
+| Student    | `rahul.sharma@gmail.com` | `demo123` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command             | Description                                        |
+| ------------------- | -------------------------------------------------- |
+| `npm run dev`       | Start the dev server                               |
+| `npm run build`     | Production build (`output: "standalone"`)          |
+| `npm start`         | Serve the production build                         |
+| `npm run lint`      | ESLint                                            |
+| `npm test`          | Unit tests (vitest, node env)                      |
+| `npm run test:component` | Component tests (jsdom + Testing Library)     |
+| `npm run test:e2e`  | Build + end-to-end API tests against a throwaway DB|
+| `npm run backup`    | Snapshot the SQLite DB to `data/backups/`          |
+| `npm run restore -- <file>` | Validate + restore a backup snapshot       |
 
-To learn more about Next.js, take a look at the following resources:
+## Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [`.env.example`](.env.example). Key ones:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `SESSION_SECRET` — session signing key (auto-generated if unset)
+- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — real payments; omit for demo mode
+- `NEXT_PUBLIC_SITE_URL` — base URL for absolute links
+- `WHATSAPP_WEBHOOK_URL` / `EMAIL_WEBHOOK_URL` — optional notification webhooks
+- `DATABASE_PATH` — override the SQLite file (default `data/db.sqlite`)
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+See [DEPLOYMENT.md](DEPLOYMENT.md): Docker (recommended), bare Node, or serverless. Health checks: `GET /api/health`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Testing
+
+Unit tests live in `tests/unit/`, component tests in `tests/component/`, and end-to-end API tests in `tests/e2e/`. E2E tests spin up a production build against a fresh temp database, so they never touch real data. CI runs lint + unit + component + e2e on every push/PR.

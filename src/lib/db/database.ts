@@ -7,8 +7,18 @@ export interface DatabaseHandle {
   get(): DB;
   mutate<T>(fn: (db: DB) => T): T;
   reset(seed: () => DB): DB;
+  version(): number;
   close(): void;
 }
+
+// Bump SCHEMA_VERSION when a migration below is added. Migrations run in order
+// on boot against any database that predates the current version, then the
+// stored schema_version is advanced.
+export const SCHEMA_VERSION = 1;
+
+// Versioned, forward-only data migrations. The index matches the version this
+// migration upgrades FROM (migrations[0] upgrades a v0 database to v1).
+export const MIGRATIONS: ((db: DB) => void)[] = [];
 
 const ARRAY_COLLECTIONS: (keyof DB)[] = [
   "users",
@@ -44,11 +54,23 @@ function isValidDB(value: unknown): value is DB {
   return true;
 }
 
+// Backfills collection keys that are missing from older payloads so upgrades
+// never lose data to validation. Returns null when the payload is unsalvageable.
+function finalize(out: Record<string, unknown>): DB | null {
+  if (!out.settings || typeof out.settings !== "object") return null;
+  if (!out.counters || typeof out.counters !== "object") out.counters = {};
+  for (const key of ARRAY_COLLECTIONS) {
+    if (!Array.isArray(out[key])) out[key] = [];
+  }
+  return out as unknown as DB;
+}
+
 function parseRow(row: unknown): DB | null {
   if (!row) return null;
   try {
     const parsed = JSON.parse((row as { value: string }).value) as unknown;
-    return isValidDB(parsed) ? parsed : null;
+    if (isValidDB(parsed)) return parsed;
+    return parsed && typeof parsed === "object" ? finalize(parsed as Record<string, unknown>) : null;
   } catch {
     return null;
   }
@@ -66,7 +88,8 @@ function loadCollections(rows: { name: string; value: string }[] | unknown): DB 
       return null;
     }
   }
-  return isValidDB(out) ? (out as DB) : null;
+  if (isValidDB(out)) return out as DB;
+  return finalize(out);
 }
 
 export function openDatabase(opts: {
@@ -106,12 +129,17 @@ export function openDatabase(opts: {
   withRetry(() => sqlite.exec("PRAGMA synchronous = NORMAL;"), "synchronous");
   withRetry(() => sqlite.exec("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);"), "kv-schema");
   withRetry(() => sqlite.exec("CREATE TABLE IF NOT EXISTS collections (name TEXT PRIMARY KEY, value TEXT NOT NULL);"), "collections-schema");
+  withRetry(() => sqlite.exec("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);"), "meta-schema");
   const legacyStmt = sqlite.prepare("SELECT value FROM kv WHERE key = ?");
   const dropLegacyStmt = sqlite.prepare("DELETE FROM kv WHERE key = ?");
   const readAllStmt = sqlite.prepare("SELECT name, value FROM collections");
   const clearColsStmt = sqlite.prepare("DELETE FROM collections");
   const writeColStmt = sqlite.prepare(
     "INSERT INTO collections (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value"
+  );
+  const getMetaStmt = sqlite.prepare("SELECT value FROM meta WHERE key = ?");
+  const setMetaStmt = sqlite.prepare(
+    "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
   );
 
   let cache: DB | null = null;
@@ -160,7 +188,17 @@ export function openDatabase(opts: {
     cache = opts.seed();
     needsPersist = true;
   }
-  if (needsPersist) persist();
+
+  // Advance the stored schema version, applying any pending migrations first.
+  const storedVersion = Number((getMetaStmt.get("schema_version") as { value: string } | undefined)?.value ?? 0) || 0;
+  const needsMigration = storedVersion < SCHEMA_VERSION;
+  if (needsMigration) {
+    for (let v = storedVersion; v < SCHEMA_VERSION; v++) {
+      MIGRATIONS[v]?.(cache!);
+    }
+  }
+  if (needsPersist || needsMigration) persist();
+  if (needsMigration) setMetaStmt.run("schema_version", String(SCHEMA_VERSION));
 
   return {
     get(): DB {
@@ -175,6 +213,9 @@ export function openDatabase(opts: {
       cache = seed();
       persist();
       return cache;
+    },
+    version(): number {
+      return SCHEMA_VERSION;
     },
     close(): void {
       try {

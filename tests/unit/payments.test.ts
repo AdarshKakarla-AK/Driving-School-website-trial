@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { makeSeed, seedIds, futureDate } from "../helpers/seed";
-import { createOrder, verifyPayment, applyCoupon, paymentRemindersDue } from "@/lib/payments";
+import { createOrder, verifyPayment, applyCoupon, paymentRemindersDue, razorpayOrderId } from "@/lib/payments";
 import { createBooking } from "@/lib/booking";
 
 describe("payments", () => {
@@ -99,5 +99,63 @@ describe("payments", () => {
     db.payments[1].dueDate = future;
     const due = paymentRemindersDue(db);
     expect(due.map((p) => p.id)).toEqual([payments[0].id]);
+  });
+
+  it("applyCoupon applies a flat discount capped at the base amount", () => {
+    const db = makeSeed();
+    db.coupons.push({ id: "c_flat", code: "FLAT", type: "flat", value: 2000, maxUses: 5, uses: 0, validFrom: "2020-01-01", validTo: "2999-12-31", active: true });
+    expect(applyCoupon(db, "FLAT", 1000)).toMatchObject({ discount: 1000, final: 0 });
+  });
+
+  it("applyCoupon rejects a coupon outside its validity window", () => {
+    const db = makeSeed();
+    db.coupons.push({ id: "c_future", code: "FUTURE", type: "percent", value: 10, maxUses: 5, uses: 0, validFrom: "2999-01-01", validTo: "2999-12-31", active: true });
+    expect(applyCoupon(db, "FUTURE", 1000).error).toBe("Coupon is not valid right now.");
+  });
+
+  it("createOrder throws for an unknown student", () => {
+    expect(() => createOrder(makeSeed(), { studentId: "nope", method: "upi" })).toThrow("STUDENT_NOT_FOUND");
+  });
+
+  it("verifyPayment throws for an unknown payment", () => {
+    expect(() => verifyPayment(makeSeed(), "nope")).toThrow("PAYMENT_NOT_FOUND");
+  });
+
+  it("razorpayOrderId returns null without credentials", async () => {
+    expect(await razorpayOrderId(1000, "rcpt")).toBeNull();
+  });
+
+  it("razorpayOrderId calls Razorpay with credentials and returns the id", async () => {
+    process.env.RAZORPAY_KEY_ID = "rzp_test";
+    process.env.RAZORPAY_KEY_SECRET = "secret";
+    const fetchMock = vi.fn().mockResolvedValue({ json: async () => ({ id: "order_demo" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const id = await razorpayOrderId(12000, "rcpt_1");
+      expect(id).toBe("order_demo");
+      const [url, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe("https://api.razorpay.com/v1/orders");
+      expect((opts.headers as Record<string, string>).Authorization).toBe(
+        "Basic " + Buffer.from("rzp_test:secret").toString("base64")
+      );
+      expect(JSON.parse(opts.body as string).amount).toBe(1200000);
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
+  });
+
+  it("razorpayOrderId swallows provider errors", async () => {
+    process.env.RAZORPAY_KEY_ID = "rzp_test";
+    process.env.RAZORPAY_KEY_SECRET = "secret";
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    try {
+      expect(await razorpayOrderId(1000, "rcpt")).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
   });
 });
