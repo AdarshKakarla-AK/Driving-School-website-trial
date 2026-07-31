@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDB, mutate, nowISO } from "@/lib/db/store";
 import { createSessionToken } from "@/lib/auth";
+import { rateLimit, clientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import type { User } from "@/lib/db/types";
 
 const SESSION_KEY = "smds_session";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const body = await req.json();
   const db = getDB();
+  const ip = clientIp(req);
+
+  const check = rateLimit(`demo:${ip}`, { max: 10, windowMs: 15 * 60000 });
+  if (!check.allowed) return rateLimitedResponse(check.retryAfterSec);
 
   if (body.action === "google") {
     let user = db.users.find((u) => u.google);

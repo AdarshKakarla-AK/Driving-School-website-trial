@@ -16,6 +16,12 @@ describe("notify", () => {
     vi.stubGlobal("fetch", fetchMock);
     delete process.env.WHATSAPP_WEBHOOK_URL;
     delete process.env.EMAIL_WEBHOOK_URL;
+    delete process.env.RESEND_API_KEY;
+    delete process.env.RESEND_FROM;
+    delete process.env.TWILIO_ACCOUNT_SID;
+    delete process.env.TWILIO_AUTH_TOKEN;
+    delete process.env.TWILIO_WHATSAPP_FROM;
+    delete process.env.TWILIO_SMS_FROM;
   });
 
   afterEach(() => {
@@ -110,5 +116,65 @@ describe("notify", () => {
     audit(db, "adm_1", "settings.updated", undefined, "demoMode=true");
     expect(db.automationLogs[0]).toMatchObject({ type: "otp", channel: "sms", status: "sent" });
     expect(db.auditLogs[0]).toMatchObject({ actorId: "adm_1", action: "settings.updated" });
+  });
+
+  it("sends email via Resend when RESEND_API_KEY is configured", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.RESEND_FROM = "School <hello@example.com>";
+    const db = makeSeed();
+    const student = db.users.find((u) => u.id === seedIds.student1)!;
+    const withEmail: User = { ...student, email: "arun@example.com" };
+    notify(db, withEmail, "invoice", "Invoice", "Your invoice", { channels: ["email"] });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.resend.com/emails");
+    expect((opts.headers as Record<string, string>).Authorization).toBe("Bearer re_test");
+    expect(JSON.parse(opts.body as string)).toEqual({
+      from: "School <hello@example.com>",
+      to: "arun@example.com",
+      subject: "Invoice",
+      text: "Your invoice",
+    });
+  });
+
+  it("sends WhatsApp via Twilio when Twilio is configured", async () => {
+    process.env.TWILIO_ACCOUNT_SID = "AC123";
+    process.env.TWILIO_AUTH_TOKEN = "tok123";
+    process.env.TWILIO_WHATSAPP_FROM = "whatsapp:+14155550199";
+    const db = makeSeed();
+    const student = db.users.find((u) => u.id === seedIds.student1)!;
+    notify(db, student, "lesson_reminder", "Reminder", "Lesson tomorrow", { channels: ["whatsapp"] });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.twilio.com/2010-04-01/Accounts/AC123/Messages.json");
+    expect((opts.headers as Record<string, string>).Authorization).toBe("Basic " + Buffer.from("AC123:tok123").toString("base64"));
+    const fields = new URLSearchParams(opts.body as string);
+    expect(fields.get("From")).toBe("whatsapp:+14155550199");
+    expect(fields.get("To")).toBe("whatsapp:+919000000011");
+    expect(fields.get("Body")).toContain("Reminder");
+  });
+
+  it("falls back to Twilio SMS when only TWILIO_SMS_FROM is set", async () => {
+    process.env.TWILIO_ACCOUNT_SID = "AC123";
+    process.env.TWILIO_AUTH_TOKEN = "tok123";
+    process.env.TWILIO_SMS_FROM = "+14155550199";
+    const db = makeSeed();
+    const student = db.users.find((u) => u.id === seedIds.student1)!;
+    notify(db, student, "welcome", "Welcome", "Hi", { channels: ["whatsapp"] });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const fields = new URLSearchParams(fetchMock.mock.calls[0][1].body as string);
+    expect(fields.get("From")).toBe("+14155550199");
+    expect(fields.get("To")).toBe("+919000000011");
+  });
+
+  it("does not call providers when their env vars are unset", () => {
+    const db = makeSeed();
+    const student = db.users.find((u) => u.id === seedIds.student1)!;
+    const withEmail: User = { ...student, email: "arun@example.com" };
+    notify(db, withEmail, "welcome", "Welcome", "Hi", { channels: ["app", "email", "whatsapp"] });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

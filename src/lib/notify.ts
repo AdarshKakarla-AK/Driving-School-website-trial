@@ -25,6 +25,61 @@ function postWebhook(url: string, payload: Record<string, unknown>) {
   }).catch(() => {});
 }
 
+function postJson(url: string, payload: Record<string, unknown>, extraHeaders: Record<string, string> = {}) {
+  void fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
+}
+
+function postForm(url: string, fields: Record<string, string>, auth: string) {
+  void fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(auth).toString("base64")}`,
+    },
+    body: new URLSearchParams(fields),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
+}
+
+// Direct provider adapters. Enable by setting the provider env vars; the
+// generic webhook contract above remains available as a fallback.
+function sendResend(to: string, subject: string, body: string) {
+  const from = process.env.RESEND_FROM ?? "Sri Mathru Driving School <onboarding@resend.dev>";
+  postJson("https://api.resend.com/emails", { from, to, subject, text: body }, { Authorization: `Bearer ${process.env.RESEND_API_KEY}` });
+}
+
+function sendTwilio(to: string, title: string, body: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) return;
+  let digits = to.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.length === 10) digits = `91${digits}`;
+  const toE164 = `+${digits}`;
+  const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM;
+  const smsFrom = process.env.TWILIO_SMS_FROM;
+  const text = `${title} — ${body}`;
+
+  if (whatsappFrom) {
+    postForm(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      From: whatsappFrom.startsWith("whatsapp:") ? whatsappFrom : `whatsapp:${whatsappFrom}`,
+      To: `whatsapp:${toE164}`,
+      Body: text,
+    }, `${sid}:${token}`);
+  } else if (smsFrom) {
+    postForm(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      From: smsFrom,
+      To: toE164,
+      Body: text,
+    }, `${sid}:${token}`);
+  }
+}
+
 /**
  * Sends a notification across channels and logs the automation.
  * Uses simulated providers by default; set env vars to enable real ones.
@@ -57,6 +112,14 @@ export function notify(db: DB, user: User, type: AutomationType, title: string, 
   }
   if (process.env.EMAIL_WEBHOOK_URL && channels.includes("email")) {
     postWebhook(process.env.EMAIL_WEBHOOK_URL, { to: user.email ?? "", subject: title, body, type, meta: opts.meta });
+  }
+
+  // Direct provider adapters (Resend for email, Twilio for WhatsApp/SMS).
+  if (process.env.RESEND_API_KEY && channels.includes("email") && user.email) {
+    sendResend(user.email, title, body);
+  }
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && channels.includes("whatsapp")) {
+    sendTwilio(user.phone, title, body);
   }
 
   return created;

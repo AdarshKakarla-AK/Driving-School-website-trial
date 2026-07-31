@@ -23,6 +23,7 @@ export function proxy(request: NextRequest) {
     pathname === "/api/auth" ||
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/health" ||
+    pathname === "/api/cron" ||
     pathname === "/api/availability" ||
     (pathname === "/api/certificates" && request.method === "POST");
 

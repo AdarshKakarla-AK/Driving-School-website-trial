@@ -23,9 +23,9 @@ SQLite is **file-based**. The database only persists where the filesystem is wri
 
 ```bash
 # 1. Configure
-cp .env.example .env.local      # set SESSION_SECRET (and Razorpay keys if you have them)
+cp .env.example .env.production   # set SESSION_SECRET, CRON_SECRET (and Razorpay keys if you have them)
 
-# 2. Build & run
+# 2. Build & run (docker-compose.yml: port 3000, smds-data volume, healthcheck)
 docker compose up -d --build
 
 # 3. The app is now at http://localhost:3000
@@ -52,6 +52,20 @@ npm start          # serves on :3000
 
 Set env vars (see `.env.example`). Back up `data/db.sqlite` regularly.
 
+## Production assets
+
+Ready-to-use files in `deploy/` and `docker-compose.yml`:
+
+| File | Purpose |
+| --- | --- |
+| `docker-compose.yml` | Production compose: restart policy, `smds-data` volume, healthcheck on `/api/health` |
+| `deploy/nginx.conf` | Reverse proxy with TLS redirect, forwarded-IP headers, static caching |
+| `deploy/sri-mathru-driving.service` | systemd unit (hardened) for the standalone server |
+| `deploy/checklist.md` | Pre/post-launch checklist + first-issue playbook |
+
+Work through `deploy/checklist.md` before going live (HTTPS, secrets, backups,
+cron schedule, health monitoring).
+
 ## Option C — Vercel
 
 Only suitable if you accept ephemeral data (resets on redeploy) — not recommended for production. If you still want to try it:
@@ -70,6 +84,9 @@ Then set `SESSION_SECRET` and `NEXT_PUBLIC_SITE_URL` in the Vercel dashboard. Da
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | No | Real payments; omit for demo mode |
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Base URL for absolute links (certificates, emails) |
 | `WHATSAPP_WEBHOOK_URL` / `EMAIL_WEBHOOK_URL` | No | Optional outbound notification webhooks |
+| `RESEND_API_KEY` / `RESEND_FROM` | No | Send email notifications directly via Resend |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` / `TWILIO_SMS_FROM` | No | Send WhatsApp/SMS notifications directly via Twilio |
+| `CRON_SECRET` | For automations | Bearer token protecting `/api/cron`; endpoint returns `503` when unset |
 
 ## Notifications
 
@@ -106,6 +123,18 @@ via Node's `fetch`. Expect the following `type` values (from the automation engi
 `promo`, `instructor_delayed`, `lesson_cancelled`, `rescheduled`, `referral`, `otp`,
 `review`, `vehicle_changed`.
 
+### Direct provider adapters
+
+Instead of (or alongside) the generic webhook, the app can call real providers
+directly — same fire-and-forget, never-blocking behavior:
+
+- **Resend** (`RESEND_API_KEY`, optional `RESEND_FROM`) — email-channel
+  notifications are sent via the Resend API with the student's email as `to`.
+- **Twilio** (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
+  `TWILIO_WHATSAPP_FROM` or `TWILIO_SMS_FROM`) — WhatsApp-channel notifications
+  are sent via Twilio Messages. 10-digit Indian numbers are normalized to `+91…`;
+  set a WhatsApp-enabled sender for WhatsApp, or a regular sender for SMS.
+
 ## Health check
 
 The app exposes an unauthenticated health endpoint that probes the database and
@@ -120,6 +149,60 @@ curl http://localhost:3000/api/health
 It returns `200` when healthy and `503` if the database is unavailable — wire it
 into your load balancer or uptime monitor. Legacy fallback for simple checks:
 `curl http://localhost:3000/api/public/site`.
+
+## Security hardening
+
+The app ships with defense-in-depth that needs no configuration:
+
+- **Security headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+  `Strict-Transport-Security` (HSTS), `Permissions-Policy`, and a `Content-Security-Policy`
+  are applied to every response; `X-Powered-By` is removed.
+- **Rate limiting** — in-memory token buckets protect `login` (30/15min per IP),
+  `register` (10/hour per IP), OTP `send` (10/15min per IP and per identifier),
+  OTP `verify` (10/15min per identifier), and the demo login (10/15min per IP).
+  Blocked requests get `429` with a `Retry-After` header. Limits are per-process;
+  move to a shared store (Redis) if you scale horizontally.
+- **Audit trail** — logins (success/failure/blocked/rate-limited), OTP events,
+  registrations, and admin mutations are recorded in `auditLogs` and surfaced in the
+  admin dashboard (`/api/admin/settings`).
+
+## Scheduled jobs
+
+The app has no built-in scheduler; a cron endpoint (`GET/POST /api/cron`) runs the
+automation engine on demand so your own scheduler (cron, GitHub Actions, UptimeRobot,
+etc.) drives it. Protected by the `CRON_SECRET` bearer token; returns `503` if unset
+and `401` on a missing/wrong token.
+
+```bash
+# Every hour, run due automations
+0 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-domain.example.com/api/cron
+```
+
+Or without a header via query token (less secure; avoid in shared logs):
+
+```bash
+curl -fsS "https://your-domain.example.com/api/cron?token=$CRON_SECRET"
+```
+
+Each run rolls the slot window forward (fresh availability, safe for production) and
+sends reminders for:
+
+| Automation | Rule | Dedupe |
+| --- | --- | --- |
+| Payment reminder | Overdue pending payments (`dueDate <= today`) | `payment.reminderSentAt` |
+| Lesson reminder | Confirmed/upcoming lessons starting within 24h | `booking.reminderSentAt` |
+| License reminder | Documents expiring within 30 days | `doc.reminderSentAt` |
+| Birthday | Student `dob` matches today (UTC) | `user.birthdayRemindedYear` |
+
+Every reminder is recorded in the in-app inbox + `automationLogs` and optionally
+forwarded to the webhook URLs above. Response shape:
+
+```json
+{"ok":true,"at":"2026-06-15T08:00:00.000Z","summary":{"paymentReminders":2,"lessonReminders":1,"licenseReminders":0,"birthdays":1}}
+```
+
+Runs are idempotent — repeated calls never double-send, so an hourly (or even
+per-minute) schedule is safe.
 
 ## Backups & restore
 

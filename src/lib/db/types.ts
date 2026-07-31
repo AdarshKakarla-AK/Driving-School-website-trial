@@ -13,6 +13,7 @@ export interface Doc {
   fileName: string;
   number?: string;
   expiry?: string;
+  reminderSentAt?: string;
   uploadedAt: string;
 }
 
@@ -29,6 +30,7 @@ export interface User {
   // student fields
   studentId?: string;
   age?: number;
+  dob?: string;
   gender?: string;
   address?: string;
   city?: string;
@@ -42,6 +44,7 @@ export interface User {
   enrolledAt?: string;
   referralCode?: string;
   referredBy?: string;
+  birthdayRemindedYear?: number;
   documents: Doc[];
   // instructor fields
   avatarColor?: string;
@@ -135,6 +138,7 @@ export interface Booking {
   attendance: Attendance;
   cancelledReason?: string;
   rescheduledFrom?: string;
+  reminderSentAt?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -183,6 +187,7 @@ export interface Payment {
   invoiceNo?: string;
   installment?: number;
   dueDate?: string;
+  reminderSentAt?: string;
   createdAt: string;
 }
 

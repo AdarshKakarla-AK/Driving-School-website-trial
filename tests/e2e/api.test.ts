@@ -75,7 +75,7 @@ beforeAll(async () => {
   server = spawn(process.execPath, [NEXT_BIN, "start", "-p", String(PORT)], {
     cwd: ROOT,
     stdio: "ignore",
-    env: { ...process.env, PORT: undefined, DATABASE_PATH: DB_FILE },
+    env: { ...process.env, PORT: undefined, DATABASE_PATH: DB_FILE, CRON_SECRET: "e2e-cron-secret" },
   });
   await waitForServer(`${BASE}/api/public/site`);
 }, 120000);
@@ -498,5 +498,157 @@ describe("certificates", () => {
     expect(verify.status).toBe(200);
     expect((verify.json as { certificate: { student: string; package: string } }).certificate.student).toBeTruthy();
     expect((verify.json as { certificate: { student: string; package: string } }).certificate.package).toBeTruthy();
+  });
+});
+
+describe("scheduled automations (/api/cron)", () => {
+  it("rejects requests without the CRON_SECRET token", async () => {
+    const res = await api("/api/cron", { method: "POST" });
+    expect(res.status).toBe(401);
+    expect((res.json as { ok: boolean }).ok).toBe(false);
+  });
+
+  it("rejects a wrong token", async () => {
+    const res = await fetch(`${BASE}/api/cron`, {
+      method: "POST",
+      headers: { authorization: "Bearer wrong-secret" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("runs automations with a valid bearer token and returns a summary", async () => {
+    const authed = await fetch(`${BASE}/api/cron`, {
+      method: "POST",
+      headers: { authorization: "Bearer e2e-cron-secret" },
+    });
+    expect(authed.status).toBe(200);
+    const payload = (await authed.json()) as {
+      ok: boolean;
+      summary: { paymentReminders: number; lessonReminders: number; licenseReminders: number; birthdays: number };
+    };
+    expect(payload.ok).toBe(true);
+    expect(payload.summary).toHaveProperty("paymentReminders");
+    expect(payload.summary).toHaveProperty("lessonReminders");
+    expect(payload.summary).toHaveProperty("licenseReminders");
+    expect(payload.summary).toHaveProperty("birthdays");
+  });
+
+  it("accepts the token via query parameter and is idempotent", async () => {
+    const first = await fetch(`${BASE}/api/cron?token=e2e-cron-secret`);
+    expect(first.status).toBe(200);
+    const firstPayload = (await first.json()) as { summary: { paymentReminders: number } };
+
+    const second = await fetch(`${BASE}/api/cron?token=e2e-cron-secret`);
+    expect(second.status).toBe(200);
+    const secondPayload = (await second.json()) as { summary: { paymentReminders: number } };
+    expect(secondPayload.summary.paymentReminders).toBe(0);
+    expect(secondPayload.summary).toEqual(firstPayload.summary);
+  });
+});
+
+describe("SEO files", () => {
+  it("serves sitemap.xml, robots.txt and manifest.webmanifest", async () => {
+    const sitemap = await fetch(`${BASE}/sitemap.xml`);
+    expect(sitemap.status).toBe(200);
+    const xml = await sitemap.text();
+    expect(xml).toContain("<loc>");
+    expect(xml).toContain("/courses");
+
+    const robots = await fetch(`${BASE}/robots.txt`);
+    expect(robots.status).toBe(200);
+    const txt = await robots.text();
+    expect(txt).toContain("Sitemap:");
+    expect(txt).toContain("/api/");
+    expect(txt).toContain("/portal/");
+
+    const manifest = await fetch(`${BASE}/manifest.webmanifest`);
+    expect(manifest.status).toBe(200);
+    const mf = (await manifest.json()) as { short_name: string; name: string };
+    expect(mf.short_name).toBe("Sri Mathru");
+    expect(mf.name).toContain("Driving");
+  });
+
+  it("renders JSON-LD structured data on the homepage", async () => {
+    const res = await fetch(`${BASE}/`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('"@type":"DrivingSchool"');
+  });
+});
+
+describe("security hardening", () => {
+  it("rate limits OTP sends per IP", async () => {
+    const ip = "203.0.113.99";
+    let lastStatus = 0;
+    let retryAfter: string | null = null;
+    for (let i = 0; i < 11; i++) {
+      const res = await fetch(`${BASE}/api/auth/otp`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": ip },
+        body: JSON.stringify({ action: "send", identifier: `rl${i}@example.com` }),
+      });
+      lastStatus = res.status;
+      retryAfter = res.headers.get("retry-after");
+    }
+    expect(lastStatus).toBe(429);
+    expect(retryAfter).toBeTruthy();
+  });
+
+  it("emits security headers on responses", async () => {
+    const res = await fetch(`${BASE}/api/health`);
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+    expect(res.headers.get("strict-transport-security")).toContain("max-age=");
+    expect(res.headers.get("permissions-policy")).toContain("camera=()");
+    expect(res.headers.get("content-security-policy")).toContain("default-src 'self'");
+    expect(res.headers.get("x-powered-by")).toBeNull();
+  });
+
+  it("records auth events in the admin audit trail", async () => {
+    await fetch(`${BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.77" },
+      body: JSON.stringify({ identifier: "admin@srimathru.in", password: "wrong-password" }),
+    });
+
+    const admin = await login("admin@srimathru.in", "admin123");
+    const settings = await api("/api/admin/settings", { cookie: admin });
+    expect(settings.status).toBe(200);
+    const audit = (settings.json as { audit: { action: string }[] }).audit;
+    expect(audit.some((a) => a.action === "login_failed")).toBe(true);
+    expect(audit.some((a) => a.action === "login_success")).toBe(true);
+  });
+});
+
+describe("CSV exports", () => {
+  it("returns CSV attachments for admin exports", async () => {
+    const admin = await login("admin@srimathru.in", "admin123");
+
+    for (const type of ["finance", "students", "payroll"]) {
+      const res = await api(`/api/admin/exports?type=${type}`, { cookie: admin });
+      expect(res.status).toBe(200);
+      expect(res.json).toBeNull(); // raw CSV body, not JSON
+
+      const raw = await fetch(`${BASE}/api/admin/exports?type=${type}`, {
+        headers: { cookie: admin },
+      });
+      expect(raw.headers.get("content-type")).toContain("text/csv");
+      expect(raw.headers.get("content-disposition")).toContain(`filename="${type}-`);
+      const body = await raw.text();
+      expect(body).toContain(",");
+      expect(body.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("rejects unknown export types", async () => {
+    const admin = await login("admin@srimathru.in", "admin123");
+    const res = await api("/api/admin/exports?type=nope", { cookie: admin });
+    expect(res.status).toBe(400);
+  });
+
+  it("blocks non-admin users", async () => {
+    const student = await login("rahul.sharma@gmail.com", "demo123");
+    const res = await api("/api/admin/exports?type=finance", { cookie: student });
+    expect(res.status).toBe(403);
   });
 });

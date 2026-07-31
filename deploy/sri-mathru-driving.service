@@ -1,0 +1,38 @@
+# systemd unit for the Next.js standalone server (Option B).
+#
+# Setup (assumes the app is already built and laid out at /opt/sri-mathru):
+#   1. npm ci && npm run build
+#   2. cp -r .next/standalone/. .next/static ./public  ->  stage next to server.js
+#      e.g.: cd /opt/sri-mathru && mkdir -p prod && cp -r .next/standalone/* prod/ &&
+#            cp -r .next/static prod/.next/static && cp -r public prod/public
+#   3. Create /opt/sri-mathru/.env.production from .env.example.
+#   4. Install this unit, create the service user, start and enable it.
+#
+#   sudo useradd --system --home /opt/sri-mathru --shell /usr/sbin/nologin sri-mathru
+#   sudo cp deploy/sri-mathru-driving.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now sri-mathru-driving
+
+[Unit]
+Description=Sri Mathru Driving School (Next.js standalone)
+After=network.target
+
+[Service]
+Type=simple
+User=sri-mathru
+Group=sri-mathru
+WorkingDirectory=/opt/sri-mathru/prod
+EnvironmentFile=/opt/sri-mathru/.env.production
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/sri-mathru/prod/data
+
+[Install]
+WantedBy=multi-user.target

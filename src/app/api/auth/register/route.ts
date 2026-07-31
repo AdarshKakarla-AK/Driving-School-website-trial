@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getDB, mutate, uid, today, nextCounter, nowISO } from "@/lib/db/store";
 import { createSessionToken } from "@/lib/auth";
-import { notify } from "@/lib/notify";
+import { notify, audit } from "@/lib/notify";
+import { rateLimit, clientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import type { User } from "@/lib/db/types";
 
 const SESSION_KEY = "smds_session";
@@ -22,8 +23,17 @@ export async function POST(req: Request) {
     }
 
     const db = getDB();
+    const ip = clientIp(req);
+
+    const check = rateLimit(`register:${ip}`, { max: 10, windowMs: 60 * 60000 });
+    if (!check.allowed) {
+      mutate((d) => audit(d, `ip:${ip}`, "register_rate_limited", undefined, `phone=${phone}`));
+      return rateLimitedResponse(check.retryAfterSec);
+    }
+
     const existing = db.users.find((u) => u.phone === phone || (email && u.email === email));
     if (existing) {
+      mutate((d) => audit(d, `ip:${ip}`, "register_duplicate", existing.id, `phone=${phone}`));
       return NextResponse.json({ error: "An account with this phone/email already exists. Please login." }, { status: 409 });
     }
 
