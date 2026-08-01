@@ -138,6 +138,22 @@ describe("notify", () => {
     });
   });
 
+  it("passes attachments to the email webhook and Resend", async () => {
+    process.env.EMAIL_WEBHOOK_URL = "https://hooks.example/email";
+    process.env.RESEND_API_KEY = "re_test";
+    const db = makeSeed();
+    const student = db.users.find((u) => u.id === seedIds.student1)!;
+    const withEmail: User = { ...student, email: "arun@example.com" };
+    const attachment = { filename: "INV-2026-001.pdf", contentType: "application/pdf", data: "JVBERi0x" };
+    notify(db, withEmail, "invoice", "Invoice", "Your invoice", { channels: ["email"], attachments: [attachment] });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const webhook = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(webhook.attachments).toEqual([attachment]);
+    const resend = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(resend.attachments).toEqual([{ filename: "INV-2026-001.pdf", content: "JVBERi0x" }]);
+  });
+
   it("sends WhatsApp via Twilio when Twilio is configured", async () => {
     process.env.TWILIO_ACCOUNT_SID = "AC123";
     process.env.TWILIO_AUTH_TOKEN = "tok123";

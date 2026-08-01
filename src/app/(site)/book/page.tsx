@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, Check, CreditCard, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import { Badge, Button, Card, Input } from "@/components/ui";
 import { api, useSession, useToast, type ApiData } from "@/lib/client";
+import { startRazorpayCheckout } from "@/lib/razorpay-client";
 import { cn, formatINR, fullDayLabel, formatTime } from "@/lib/utils";
 
 type Pkg = { id: string; name: string; slug: string; price: number; sessions: number; durationWeeks: number; vehicleType: string; emi?: { downPayment: number; months: number; monthly: number } };
@@ -116,24 +117,22 @@ function BookInner() {
         }),
       });
 
-      if (!order.demo && order.razorpayOrderId && order.keyId && typeof window !== "undefined") {
-        await loadRazorpay();
-        const rzp = new (window as ApiData).Razorpay({
-          key: order.keyId,
-          amount: order.amountPaise,
-          currency: "INR",
+      if (!order.demo && order.razorpayOrderId && order.keyId) {
+        await startRazorpayCheckout({
+          keyId: order.keyId,
+          orderId: order.razorpayOrderId,
+          amountPaise: order.amountPaise,
           name: "Sri Mathru Driving School",
           description: activePkg.name,
-          order_id: order.razorpayOrderId,
-          prefill: { contact: user.phone, email: user.email },
-          handler: async (res: ApiData) => {
-            const verified = await api<ApiData>("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: order.payment.id, razorpayPaymentId: res.razorpay_payment_id }) });
+          contact: user.phone,
+          email: user.email,
+          onSuccess: async (razorpayPaymentId) => {
+            const verified = await api<ApiData>("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: order.payment.id, razorpayPaymentId }) });
             setSuccess({ booking: b.booking, payment: verified.payment, invoice: verified.invoice });
             setStep(4);
           },
-          modal: { ondismiss: () => setPaying(false) },
+          onDismiss: () => setPaying(false),
         });
-        rzp.open();
       } else {
         // demo checkout
         const verified = await api<ApiData>("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: order.payment.id }) });
@@ -442,14 +441,4 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <span className="font-semibold text-ink-900">{value}</span>
     </div>
   );
-}
-
-function loadRazorpay() {
-  return new Promise<void>((resolve) => {
-    if ((window as ApiData).Razorpay) return resolve();
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve();
-    document.body.appendChild(s);
-  });
 }

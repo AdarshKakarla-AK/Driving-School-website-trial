@@ -1,4 +1,5 @@
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
+import { createHmac } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -75,7 +76,7 @@ beforeAll(async () => {
   server = spawn(process.execPath, [NEXT_BIN, "start", "-p", String(PORT)], {
     cwd: ROOT,
     stdio: "ignore",
-    env: { ...process.env, PORT: undefined, DATABASE_PATH: DB_FILE, CRON_SECRET: "e2e-cron-secret" },
+    env: { ...process.env, PORT: undefined, DATABASE_PATH: DB_FILE, CRON_SECRET: "e2e-cron-secret", RAZORPAY_WEBHOOK_SECRET: "e2e-webhook-secret", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "" },
   });
   await waitForServer(`${BASE}/api/public/site`);
 }, 120000);
@@ -196,16 +197,15 @@ describe("booking lifecycle", () => {
     const student = await login("rahul.sharma@gmail.com", "demo123");
     const av = await api("/api/availability?days=14");
     const days = (av.json as { days: { date: string; slots: { time: string; status: string }[] }[] }).days;
-    const tomorrow = days[1];
-    const open = tomorrow.slots.find((s) => s.status === "available");
-    expect(open).toBeTruthy();
+    const target = days.slice(1).flatMap((d) => d.slots.filter((s) => s.status === "available").map((s) => ({ date: d.date, time: s.time })))[0];
+    expect(target).toBeTruthy();
 
-    const book = await api("/api/bookings", { method: "POST", cookie: student, body: { date: tomorrow.date, time: open!.time } });
+    const book = await api("/api/bookings", { method: "POST", cookie: student, body: { date: target!.date, time: target!.time } });
     expect(book.status).toBe(200);
     const bookingId = (book.json as { booking: { id: string } }).booking.id;
     expect(bookingId).toBeTruthy();
 
-    const dup = await api("/api/bookings", { method: "POST", cookie: student, body: { date: tomorrow.date, time: open!.time } });
+    const dup = await api("/api/bookings", { method: "POST", cookie: student, body: { date: target!.date, time: target!.time } });
     expect(dup.status).toBe(409);
 
     const past = await api("/api/bookings", { method: "POST", cookie: student, body: { date: "2020-01-01", time: "09:00" } });
@@ -246,11 +246,11 @@ describe("lesson workflows", () => {
   async function bookOpenSlot(student: string): Promise<{ id: string; date: string; time: string }> {
     const av = await api(`/api/availability?days=14&instructorId=${instId}`);
     const days = (av.json as { days: { date: string; slots: { time: string; status: string }[] }[] }).days;
-    const open = days[1].slots.find((s) => s.status === "available");
-    expect(open).toBeTruthy();
-    const book = await api("/api/bookings", { method: "POST", cookie: student, body: { date: days[1].date, time: open!.time, instructorId: instId } });
+    const target = days.slice(1).flatMap((d) => d.slots.filter((s) => s.status === "available").map((s) => ({ date: d.date, time: s.time })))[0];
+    expect(target).toBeTruthy();
+    const book = await api("/api/bookings", { method: "POST", cookie: student, body: { date: target!.date, time: target!.time, instructorId: instId } });
     expect(book.status).toBe(200);
-    return { id: (book.json as { booking: { id: string } }).booking.id, date: days[1].date, time: open!.time };
+    return { id: (book.json as { booking: { id: string } }).booking.id, date: target!.date, time: target!.time };
   }
 
   it("marks attendance and writes a lesson note", async () => {
@@ -650,5 +650,104 @@ describe("CSV exports", () => {
     const student = await login("rahul.sharma@gmail.com", "demo123");
     const res = await api("/api/admin/exports?type=finance", { cookie: student });
     expect(res.status).toBe(403);
+  });
+});
+
+describe("Razorpay webhook", () => {
+  const SECRET = "e2e-webhook-secret";
+  const body = { event: "payment.captured", payload: { payment: { entity: { id: "pay_wh_e2e", order_id: "order_unknown", status: "captured" } } } };
+  const rawBody = JSON.stringify(body);
+
+  function sign(payload: string): string {
+    return createHmac("sha256", SECRET).update(payload).digest("hex");
+  }
+
+  it("is public and rejects a bad signature", async () => {
+    const bad = await api("/api/payments/webhook", { method: "POST", body });
+    expect(bad.status).toBe(401);
+
+    const res = await fetch(`${BASE}/api/payments/webhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-razorpay-signature": "deadbeef" },
+      body: rawBody,
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("accepts a valid signature and processes the event", async () => {
+    const res = await fetch(`${BASE}/api/payments/webhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-razorpay-signature": sign(rawBody) },
+      body: rawBody,
+    });
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { ok: boolean; event: string; applied: boolean };
+    expect(json).toMatchObject({ ok: true, event: "payment.captured", applied: false });
+  });
+
+  it("rejects malformed JSON even with a valid signature", async () => {
+    const malformed = "{not json";
+    const res = await fetch(`${BASE}/api/payments/webhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-razorpay-signature": sign(malformed) },
+      body: malformed,
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("invoice PDF downloads", () => {
+  async function paidInvoiceNumber(student: string): Promise<string> {
+    const av = await api("/api/availability?days=14&instructorId=inst_ravi");
+    const days = (av.json as { days: { date: string; slots: { time: string; status: string }[] }[] }).days;
+    let open: { date: string; time: string } | undefined;
+    for (let i = 1; i < days.length; i++) {
+      const slot = days[i].slots.find((s) => s.status === "available");
+      if (slot) {
+        open = { date: days[i].date, time: slot.time };
+        break;
+      }
+    }
+    expect(open).toBeTruthy();
+    const book = await api("/api/bookings", { method: "POST", cookie: student, body: { date: open!.date, time: open!.time, instructorId: "inst_ravi" } });
+    expect(book.status).toBe(200);
+    const bookingId = (book.json as { booking: { id: string } }).booking.id;
+
+    const order = await api("/api/payments/order", { method: "POST", cookie: student, body: { bookingId, amount: 12000, method: "upi" } });
+    expect(order.status).toBe(200);
+    const paymentId = (order.json as { payment: { id: string } }).payment.id;
+
+    const verify = await api("/api/payments/verify", { method: "POST", cookie: student, body: { paymentId, razorpayPaymentId: "pay_pdf_e2e" } });
+    expect(verify.status).toBe(200);
+    return (verify.json as { invoice: { number: string } }).invoice.number;
+  }
+
+  it("lets a student download their paid invoice as a PDF", async () => {
+    const student = await login("rahul.sharma@gmail.com", "demo123");
+    const number = await paidInvoiceNumber(student);
+
+    const res = await fetch(`${BASE}/api/portal/invoices/${number}/download`, { headers: { cookie: student } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/pdf");
+    expect(res.headers.get("content-disposition")).toContain(`filename="${number}.pdf"`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
+  it("blocks other students and returns 404 for unknown invoices", async () => {
+    const student = await login("rahul.sharma@gmail.com", "demo123");
+    const number = await paidInvoiceNumber(student);
+
+    const other = await login("ananya.iyer@gmail.com", "demo123");
+    const forbidden = await api(`/api/portal/invoices/${number}/download`, { cookie: other });
+    expect(forbidden.status).toBe(403);
+
+    const missing = await api("/api/portal/invoices/INV-9999-999/download", { cookie: student });
+    expect(missing.status).toBe(404);
+  });
+
+  it("blocks anonymous downloads", async () => {
+    const res = await api("/api/portal/invoices/INV-2026-001/download");
+    expect(res.status).toBe(401);
   });
 });

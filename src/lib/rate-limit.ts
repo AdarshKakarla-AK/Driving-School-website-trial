@@ -35,8 +35,9 @@ export function clientIp(req: Request): string {
   return req.headers.get("x-real-ip") ?? "unknown";
 }
 
-export function rateLimitedResponse(retryAfterSec: number): NextResponse {
+export function rateLimitedResponse(retryAfterSec: number | { retryAfterSec: number }): NextResponse {
+  const secs = typeof retryAfterSec === "number" ? retryAfterSec : retryAfterSec.retryAfterSec;
   const res = NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
-  res.headers.set("retry-after", String(retryAfterSec));
+  res.headers.set("retry-after", String(secs));
   return res;
 }

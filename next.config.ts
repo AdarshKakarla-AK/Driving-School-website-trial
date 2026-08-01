@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["bcryptjs", "qrcode"],
+  serverExternalPackages: ["bcryptjs", "qrcode", "pdfkit"],
   poweredByHeader: false,
   async headers() {
     return [

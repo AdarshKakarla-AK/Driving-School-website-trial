@@ -25,6 +25,7 @@ export function proxy(request: NextRequest) {
     pathname === "/api/health" ||
     pathname === "/api/cron" ||
     pathname === "/api/availability" ||
+    pathname === "/api/payments/webhook" ||
     (pathname === "/api/certificates" && request.method === "POST");
 
   if (isPublic) return NextResponse.next();

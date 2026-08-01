@@ -5,6 +5,13 @@ import type { AutomationType, DB, NotifChannel, User, Notification, AutomationLo
 export interface SendOptions {
   channels?: NotifChannel[];
   meta?: string;
+  attachments?: { filename: string; contentType: string; data: string }[];
+}
+
+export interface NotificationAttachment {
+  filename: string;
+  contentType: string;
+  data: string;
 }
 
 function whatsappRecipient(user: User): string {
@@ -48,9 +55,13 @@ function postForm(url: string, fields: Record<string, string>, auth: string) {
 
 // Direct provider adapters. Enable by setting the provider env vars; the
 // generic webhook contract above remains available as a fallback.
-function sendResend(to: string, subject: string, body: string) {
+function sendResend(to: string, subject: string, body: string, attachments?: NotificationAttachment[]) {
   const from = process.env.RESEND_FROM ?? "Sri Mathru Driving School <onboarding@resend.dev>";
-  postJson("https://api.resend.com/emails", { from, to, subject, text: body }, { Authorization: `Bearer ${process.env.RESEND_API_KEY}` });
+  const payload: Record<string, unknown> = { from, to, subject, text: body };
+  if (attachments?.length) {
+    payload.attachments = attachments.map((a) => ({ filename: a.filename, content: a.data }));
+  }
+  postJson("https://api.resend.com/emails", payload, { Authorization: `Bearer ${process.env.RESEND_API_KEY}` });
 }
 
 function sendTwilio(to: string, title: string, body: string) {
@@ -111,12 +122,12 @@ export function notify(db: DB, user: User, type: AutomationType, title: string, 
     postWebhook(process.env.WHATSAPP_WEBHOOK_URL, { to: user.phone, title, body, type, meta: opts.meta });
   }
   if (process.env.EMAIL_WEBHOOK_URL && channels.includes("email")) {
-    postWebhook(process.env.EMAIL_WEBHOOK_URL, { to: user.email ?? "", subject: title, body, type, meta: opts.meta });
+    postWebhook(process.env.EMAIL_WEBHOOK_URL, { to: user.email ?? "", subject: title, body, type, meta: opts.meta, attachments: opts.attachments });
   }
 
   // Direct provider adapters (Resend for email, Twilio for WhatsApp/SMS).
   if (process.env.RESEND_API_KEY && channels.includes("email") && user.email) {
-    sendResend(user.email, title, body);
+    sendResend(user.email, title, body, opts.attachments);
   }
   if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && channels.includes("whatsapp")) {
     sendTwilio(user.phone, title, body);

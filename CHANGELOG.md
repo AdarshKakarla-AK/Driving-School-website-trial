@@ -9,6 +9,14 @@ husky + commitlint).
 ## [Unreleased]
 
 ### Added
+- Razorpay gateway: real checkout via the shared `startRazorpayCheckout` modal in the
+  booking flow and student portal, order creation + verification API routes
+  (rate-limited and ownership-checked), and a signed `/api/payments/webhook`
+  endpoint that confirms `payment.captured` / `order.paid` and fails
+  `payment.failed` events idempotently (HMAC-SHA256 via `RAZORPAY_WEBHOOK_SECRET`).
+- PDF invoices & receipts: `pdfkit`-rendered GST invoices with per-line totals,
+  downloadable from the student portal (`/api/portal/invoices/<no>/download`) with
+  ownership checks, plus emailed receipts when Resend is configured.
 - `/api/cron` endpoint + automation engine (`src/lib/automation.ts`) for scheduled
   reminders: overdue payments, lessons starting within 24h, documents expiring
   within 30 days, and birthdays. Protected by `CRON_SECRET`; idempotent per run.

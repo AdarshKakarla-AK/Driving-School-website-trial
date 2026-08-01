@@ -1,7 +1,9 @@
 import "server-only";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { uid, nowISO, today, nextCounter } from "./db/store";
 import { notify } from "./notify";
 import { confirmBooking } from "./booking";
+import { renderInvoicePdf, invoicePdfData } from "./pdf";
 import type { Coupon, DB, Invoice, Payment, User } from "./db/types";
 import type { ApiData } from "./client";
 
@@ -25,6 +27,32 @@ export async function razorpayOrderId(amount: number, receipt: string): Promise<
   } catch {
     return null;
   }
+}
+
+export async function razorpayFetchPayment(paymentId: string): Promise<{ id: string; status: string; captured: boolean } | null> {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret || !paymentId) return null;
+  try {
+    const res = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${keyId}:${keySecret}`).toString("base64"),
+      },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { id: string; status: string; captured?: boolean };
+    return { id: data.id, status: data.status, captured: Boolean(data.captured) };
+  } catch {
+    return null;
+  }
+}
+
+export function razorpayVerifySignature(payload: string, signature: string, secret: string): boolean {
+  if (!payload || !signature || !secret) return false;
+  const expected = createHmac("sha256", secret).update(payload).digest();
+  const received = Buffer.from(signature, "hex");
+  if (expected.length !== received.length) return false;
+  return timingSafeEqual(expected, received);
 }
 
 export interface CreateOrderInput {
@@ -118,7 +146,8 @@ export function verifyPayment(db: DB, paymentId: string, razorpayPaymentId?: str
     db.invoices.push(inv);
     pay.invoiceNo = invNum;
     invoice = inv;
-    notify(db, studentInDb, "invoice", "Invoice Generated 🧾", `Invoice ${invNum} for ₹${pay.amount} is ready in your dashboard.`, { channels: ["app", "email"], meta: "/portal/dashboard?tab=payments" });
+    notify(db, studentInDb, "invoice", "Invoice Generated 🧾", `Invoice ${invNum} for ₹${pay.amount} is ready in your dashboard.`, { channels: ["app"], meta: "/portal/dashboard?tab=payments" });
+    void emailInvoicePdf(db, inv, studentInDb);
     notify(db, studentInDb, "receipt", "Payment Receipt ✅", `We received your payment of ₹${pay.amount} (${pay.method.toUpperCase()}).`, { channels: ["app", "whatsapp", "email"] });
     db.automationLogs.push({ id: uid("auto"), type: "receipt", channel: "whatsapp", recipient: studentInDb.phone, summary: `Payment of ₹${pay.amount} confirmed`, status: "simulated", createdAt: nowISO() });
   } else if (pay.installment !== undefined) {
@@ -156,4 +185,54 @@ export function applyCoupon(db: DB, code: string, baseAmount: number): { coupon?
 export function paymentRemindersDue(db: DB): Payment[] {
   const todayStr = today();
   return db.payments.filter((p) => p.status === "pending" && p.dueDate && p.dueDate <= todayStr);
+}
+
+async function emailInvoicePdf(db: DB, invoice: Invoice, student: User): Promise<void> {
+  try {
+    const pdf = await renderInvoicePdf(invoicePdfData(db, invoice));
+    notify(db, student, "invoice", "Invoice Generated 🧾", `Invoice ${invoice.number} for ₹${invoice.total} is attached.`, {
+      channels: ["email"],
+      meta: "/portal/dashboard?tab=payments",
+      attachments: [{ filename: `${invoice.number}.pdf`, contentType: "application/pdf", data: pdf.toString("base64") }],
+    });
+  } catch {
+    // PDF emailing is best-effort and must never fail the payment.
+  }
+}
+
+export function markPaymentFailed(db: DB, paymentId: string): Payment {
+  const payment = db.payments.find((p) => p.id === paymentId);
+  if (!payment) throw new Error("PAYMENT_NOT_FOUND");
+  payment.status = "failed";
+  return payment;
+}
+
+export interface RazorpayWebhookResult {
+  event: string;
+  applied: boolean;
+  paymentId?: string;
+}
+
+export function handleRazorpayWebhook(db: DB, payload: ApiData): RazorpayWebhookResult {
+  const event: string | undefined = payload?.event;
+  const entity = payload?.payload?.payment?.entity ?? payload?.payload?.order?.entity;
+  if (!event || !entity) return { event: event ?? "unknown", applied: false };
+
+  if (event === "payment.captured" || event === "order.paid") {
+    const orderId: string | undefined = entity.order_id ?? entity.id;
+    const payment = orderId ? db.payments.find((p) => p.razorpayOrderId === orderId) : undefined;
+    if (!payment || payment.status !== "pending") return { event, applied: false, paymentId: payment?.id };
+    verifyPayment(db, payment.id, entity.id);
+    return { event, applied: true, paymentId: payment.id };
+  }
+
+  if (event === "payment.failed") {
+    const orderId: string | undefined = entity.order_id;
+    const payment = orderId ? db.payments.find((p) => p.razorpayOrderId === orderId) : undefined;
+    if (!payment || payment.status !== "pending") return { event, applied: false, paymentId: payment?.id };
+    markPaymentFailed(db, payment.id);
+    return { event, applied: true, paymentId: payment.id };
+  }
+
+  return { event, applied: false };
 }

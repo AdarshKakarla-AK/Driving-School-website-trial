@@ -4,7 +4,7 @@
 
 - **Data layer:** SQLite via Node's built-in `node:sqlite` (`DatabaseSync`), stored at `data/db.sqlite` (WAL mode, transactional writes, auto-migrated from the legacy `data/db.json`). Collections are stored as per-row JSON; a stored `schema_version` is advanced on boot, and missing collection keys from older payloads are backfilled automatically — upgrades never drop data.
 - **Sessions:** signed HMAC cookie (`smds_session`). Secret comes from `SESSION_SECRET` or an auto-generated `data/secret.key`.
-- **Payments:** Razorpay. If `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are unset, the app runs in **demo mode** (fake orders, instant verification).
+- **Payments:** Razorpay. If `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are unset, the app runs in **demo mode** (fake orders, instant verification). Real payments are confirmed via the signed `/api/payments/webhook` endpoint (requires `RAZORPAY_WEBHOOK_SECRET`), and paid bookings get downloadable PDF invoices.
 - **Build:** `output: "standalone"` produces a self-contained server for Docker.
 
 ## Important: SQLite persistence
@@ -82,11 +82,38 @@ Then set `SESSION_SECRET` and `NEXT_PUBLIC_SITE_URL` in the Vercel dashboard. Da
 | --- | --- | --- |
 | `SESSION_SECRET` | Recommended | Signs session cookies. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | No | Real payments; omit for demo mode |
+| `RAZORPAY_WEBHOOK_SECRET` | For live payments | HMAC secret that verifies Razorpay webhook signatures; `/api/payments/webhook` returns `503` when unset |
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Base URL for absolute links (certificates, emails) |
 | `WHATSAPP_WEBHOOK_URL` / `EMAIL_WEBHOOK_URL` | No | Optional outbound notification webhooks |
 | `RESEND_API_KEY` / `RESEND_FROM` | No | Send email notifications directly via Resend |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` / `TWILIO_SMS_FROM` | No | Send WhatsApp/SMS notifications directly via Twilio |
 | `CRON_SECRET` | For automations | Bearer token protecting `/api/cron`; endpoint returns `503` when unset |
+
+## Payments & webhooks
+
+Payment flow: the client creates a Razorpay order via `POST /api/payments/order`,
+opens the Razorpay Checkout modal, then confirms via `POST /api/payments/verify`
+(rate-limited, ownership-checked). `verify` never trusts the client — in live mode
+it fetches the payment from the Razorpay API and only proceeds if it is captured.
+
+The server keeps DB state in sync via `POST /api/payments/webhook`, so payments are
+recorded even if the browser is closed mid-checkout. Configure the webhook in the
+[Razorpay dashboard](https://dashboard.razorpay.com) to send `payment.captured`,
+`order.paid`, and `payment.failed` events to:
+
+```
+https://your-domain.example.com/api/payments/webhook
+```
+
+and set the webhook secret as `RAZORPAY_WEBHOOK_SECRET` (generate with
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). The
+endpoint verifies the HMAC-SHA256 `X-Razorpay-Signature` header, ignores unknown
+events, and is idempotent — repeated events never double-confirm. Until the secret
+is set, the endpoint returns `503`.
+
+Paid bookings generate an invoice automatically; students download it as a PDF from
+the portal (`/api/portal/invoices/<no>/download`) and receive a receipt by email when
+`RESEND_API_KEY` is configured.
 
 ## Notifications
 

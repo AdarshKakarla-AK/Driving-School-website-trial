@@ -1,6 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { createHmac } from "node:crypto";
 import { makeSeed, seedIds, futureDate } from "../helpers/seed";
-import { createOrder, verifyPayment, applyCoupon, paymentRemindersDue, razorpayOrderId } from "@/lib/payments";
+import {
+  createOrder,
+  verifyPayment,
+  applyCoupon,
+  paymentRemindersDue,
+  razorpayOrderId,
+  razorpayFetchPayment,
+  razorpayVerifySignature,
+  markPaymentFailed,
+  handleRazorpayWebhook,
+} from "@/lib/payments";
 import { createBooking } from "@/lib/booking";
 
 describe("payments", () => {
@@ -157,5 +168,117 @@ describe("payments", () => {
       delete process.env.RAZORPAY_KEY_ID;
       delete process.env.RAZORPAY_KEY_SECRET;
     }
+  });
+
+  it("razorpayVerifySignature accepts a valid HMAC and rejects others", () => {
+    const payload = JSON.stringify({ event: "payment.captured" });
+    const sig = createHmac("sha256", "wh-secret").update(payload).digest("hex");
+    expect(razorpayVerifySignature(payload, sig, "wh-secret")).toBe(true);
+    expect(razorpayVerifySignature(payload, "deadbeef", "wh-secret")).toBe(false);
+    expect(razorpayVerifySignature(payload, sig, "other-secret")).toBe(false);
+    expect(razorpayVerifySignature(payload, "", "wh-secret")).toBe(false);
+    expect(razorpayVerifySignature("", sig, "wh-secret")).toBe(false);
+  });
+
+  it("razorpayFetchPayment returns null without credentials", async () => {
+    expect(await razorpayFetchPayment("pay_1")).toBeNull();
+  });
+
+  it("razorpayFetchPayment calls Razorpay and returns capture state", async () => {
+    process.env.RAZORPAY_KEY_ID = "rzp_test";
+    process.env.RAZORPAY_KEY_SECRET = "secret";
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: "pay_rzp", status: "captured", captured: true }) });
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const pay = await razorpayFetchPayment("pay_rzp");
+      expect(pay).toEqual({ id: "pay_rzp", status: "captured", captured: true });
+      const [url, opts] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe("https://api.razorpay.com/v1/payments/pay_rzp");
+      expect((opts.headers as Record<string, string>).Authorization).toBe(
+        "Basic " + Buffer.from("rzp_test:secret").toString("base64")
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
+  });
+
+  it("razorpayFetchPayment returns null on provider failure", async () => {
+    process.env.RAZORPAY_KEY_ID = "rzp_test";
+    process.env.RAZORPAY_KEY_SECRET = "secret";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    try {
+      expect(await razorpayFetchPayment("pay_rzp")).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
+  });
+
+  it("markPaymentFailed sets a pending payment to failed", () => {
+    const db = makeSeed();
+    const { payments } = createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    markPaymentFailed(db, payments[0].id);
+    expect(db.payments[0].status).toBe("failed");
+    expect(() => markPaymentFailed(db, "nope")).toThrow("PAYMENT_NOT_FOUND");
+  });
+
+  it("handleRazorpayWebhook marks a payment paid on payment.captured", () => {
+    const db = makeSeed();
+    const { payments } = createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    db.payments[0].razorpayOrderId = "order_wh";
+
+    const result = handleRazorpayWebhook(db, {
+      event: "payment.captured",
+      payload: { payment: { entity: { id: "pay_wh", order_id: "order_wh", status: "captured" } } },
+    });
+    expect(result).toMatchObject({ event: "payment.captured", applied: true, paymentId: payments[0].id });
+    expect(db.payments[0].status).toBe("paid");
+    expect(db.payments[0].razorpayPaymentId).toBe("pay_wh");
+    expect(db.invoices).toHaveLength(1);
+  });
+
+  it("handleRazorpayWebhook marks a payment paid on order.paid", () => {
+    const db = makeSeed();
+    createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    db.payments[0].razorpayOrderId = "order_wh";
+
+    const result = handleRazorpayWebhook(db, {
+      event: "order.paid",
+      payload: { order: { entity: { id: "order_wh", amount: 1200000 } } },
+    });
+    expect(result.applied).toBe(true);
+    expect(db.payments[0].status).toBe("paid");
+  });
+
+  it("handleRazorpayWebhook marks a payment failed on payment.failed", () => {
+    const db = makeSeed();
+    createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    db.payments[0].razorpayOrderId = "order_wh";
+
+    const result = handleRazorpayWebhook(db, {
+      event: "payment.failed",
+      payload: { payment: { entity: { id: "pay_wh", order_id: "order_wh", status: "failed" } } },
+    });
+    expect(result.applied).toBe(true);
+    expect(db.payments[0].status).toBe("failed");
+    expect(db.invoices).toHaveLength(0);
+  });
+
+  it("handleRazorpayWebhook is idempotent and ignores unknown events", () => {
+    const db = makeSeed();
+    createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    db.payments[0].razorpayOrderId = "order_wh";
+
+    expect(
+      handleRazorpayWebhook(db, { event: "payment.captured", payload: { payment: { entity: { id: "pay_1", order_id: "order_wh" } } } }).applied
+    ).toBe(true);
+    const paid = db.payments[0].id;
+    expect(handleRazorpayWebhook(db, { event: "payment.captured", payload: { payment: { entity: { id: "pay_2", order_id: "order_wh" } } } }).applied).toBe(false);
+    expect(db.payments.find((p) => p.id === paid)!.razorpayPaymentId).toBe("pay_1");
+    expect(handleRazorpayWebhook(db, { event: "refund.processed", payload: {} }).applied).toBe(false);
+    expect(handleRazorpayWebhook(db, { event: "payment.captured", payload: { payment: { entity: { id: "pay_3", order_id: "unknown_order" } } } }).applied).toBe(false);
   });
 });

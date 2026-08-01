@@ -4,24 +4,52 @@ import * as React from "react";
 import { CreditCard, Download, FileText, Receipt } from "lucide-react";
 import { Badge, Button, Card } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
+import { startRazorpayCheckout } from "@/lib/razorpay-client";
 import { formatDate, formatINR } from "@/lib/utils";
 
 export function Payments({ data, refresh }: { data: ApiData; refresh: () => void }) {
   const toast = useToast();
   const payments = data.payments ?? [];
+  const [payingId, setPayingId] = React.useState<string | null>(null);
+
+  const verify = async (paymentId: string, razorpayPaymentId?: string) => {
+    await api("/api/payments/verify", {
+      method: "POST",
+      body: JSON.stringify({ paymentId, razorpayPaymentId }),
+    });
+    toast.push("Payment successful — receipt sent ✅");
+    refresh();
+  };
 
   const payNow = async (p: ApiData) => {
+    if (payingId) return;
+    setPayingId(p.id);
     try {
-      const order = await api<{ payments?: ApiData[]; payment?: ApiData }>("/api/payments/order", {
+      const order = await api<{ payments?: ApiData[]; payment?: ApiData; razorpayOrderId: string | null; keyId?: string; amountPaise: number; demo: boolean }>("/api/payments/order", {
         method: "POST",
         body: JSON.stringify({ packageId: data.profile.packageId, amount: p.amount, plan: p.installment ? "emi" : "full", method: "upi" }),
       });
       const payment = order.payments?.[0] ?? order.payment;
-      await api("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: payment.id }) });
-      toast.push("Payment successful — receipt sent ✅");
-      refresh();
+
+      if (!order.demo && order.razorpayOrderId && order.keyId) {
+        await startRazorpayCheckout({
+          keyId: order.keyId,
+          orderId: order.razorpayOrderId,
+          amountPaise: order.amountPaise,
+          name: "Sri Mathru Driving School",
+          description: "Course payment",
+          contact: data.profile.phone,
+          email: data.profile.email,
+          onSuccess: (razorpayPaymentId) => verify(payment.id, razorpayPaymentId),
+          onDismiss: () => setPayingId(null),
+        });
+      } else {
+        await verify(payment.id);
+      }
     } catch (e: ApiData) {
       toast.push(e.message, "error");
+    } finally {
+      setPayingId(null);
     }
   };
 
@@ -48,7 +76,7 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
                   </p>
                   <p className="text-xs text-ink-400">{p.dueDate ? `Due ${formatDate(p.dueDate)}` : "Due now"}</p>
                 </div>
-                <Button size="sm" onClick={() => payNow(p)}>
+                <Button size="sm" loading={payingId === p.id} onClick={() => payNow(p)}>
                   Pay {formatINR(p.amount)}
                 </Button>
               </div>
@@ -80,9 +108,11 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
                   {p.status}
                 </Badge>
                 {p.status === "paid" && p.invoiceNo && (
-                  <Button size="sm" variant="ghost" onClick={() => toast.push(`Invoice ${p.invoiceNo} downloaded`)}>
-                    <Download className="size-3.5" /> {p.invoiceNo}
-                  </Button>
+                  <a href={`/api/portal/invoices/${p.invoiceNo}/download`} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="ghost">
+                      <Download className="size-3.5" /> {p.invoiceNo}
+                    </Button>
+                  </a>
                 )}
               </div>
             </div>
@@ -102,9 +132,16 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
                 <p className="font-semibold text-ink-800">{i.number}</p>
                 <p className="text-xs text-ink-400">Issued {formatDate(i.issuedAt)}</p>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-ink-900">{formatINR(i.total)}</p>
-                <p className="text-xs text-ink-400">GST ₹{Math.round(i.gst)} · {i.items?.[0]?.name}</p>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="font-bold text-ink-900">{formatINR(i.total)}</p>
+                  <p className="text-xs text-ink-400">GST ₹{Math.round(i.gst)} · {i.items?.[0]?.name}</p>
+                </div>
+                <a href={`/api/portal/invoices/${i.number}/download`} target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="ghost">
+                    <Download className="size-3.5" /> PDF
+                  </Button>
+                </a>
               </div>
             </div>
           ))}

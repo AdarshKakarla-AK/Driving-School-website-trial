@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { mutate } from "@/lib/db/store";
 import { createOrder, applyCoupon, razorpayOrderId } from "@/lib/payments";
+import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limit = rateLimit(`payments-order:${clientIp(req)}`, { max: 30, windowMs: 15 * 60 * 1000 });
+  if (!limit.allowed) return rateLimitedResponse(limit);
+
   const user = await requireUser(["student"]);
   const body = await req.json();
 
@@ -31,6 +35,12 @@ export async function POST(req: Request) {
 
   const payment = payments[0];
   const orderId = await razorpayOrderId(finalAmount, payment.ref);
+  if (orderId) {
+    mutate((db) => {
+      const p = db.payments.find((x) => x.id === payment.id);
+      if (p) p.razorpayOrderId = orderId;
+    });
+  }
 
   return NextResponse.json({
     ok: true,
