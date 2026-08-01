@@ -18,11 +18,12 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https:",
+              "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",

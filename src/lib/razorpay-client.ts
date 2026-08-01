@@ -1,11 +1,28 @@
 import type { ApiData } from "@/lib/client";
 
-export function loadRazorpay(): Promise<void> {
-  return new Promise<void>((resolve) => {
+export function loadRazorpay(timeoutMs = 10000): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     if ((window as ApiData).Razorpay) return resolve();
     const s = document.createElement("script");
+    let timer = 0;
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      s.onload = null;
+      s.onerror = null;
+    };
+    timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Razorpay checkout timed out. Check your network or browser console."));
+    }, timeoutMs);
     s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve();
+    s.onload = () => {
+      cleanup();
+      resolve();
+    };
+    s.onerror = () => {
+      cleanup();
+      reject(new Error("Razorpay checkout failed to load. A content policy may be blocking it."));
+    };
     document.body.appendChild(s);
   });
 }

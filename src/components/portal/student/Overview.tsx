@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CalendarDays, CarFront, CreditCard, FileWarning, Bell, MessageSquareText, Phone, Star, TrendingUp, User } from "lucide-react";
 import { Avatar, Button, Card, ProgressBar, Stars, Stat } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
+import { startRazorpayCheckout } from "@/lib/razorpay-client";
 import { dayLabel, formatINR, formatTime, greeting } from "@/lib/utils";
 import { SKILL_LABELS } from "@/lib/db/seed";
 
@@ -18,15 +19,42 @@ export function Overview({ data, refresh, onBook, onTab }: { data: ApiData; refr
   // eslint-disable-next-line react-hooks/purity
   const expiringDoc = data.profile.documents?.some((d: ApiData) => d.expiry && new Date(d.expiry).getTime() - Date.now() < 45 * 86400000);
 
+  const [paying, setPaying] = React.useState(false);
+
   const payNow = async (p: ApiData) => {
+    if (paying) return;
+    setPaying(true);
     try {
-      const order = await api<{ payment: ApiData; demo: boolean }>("/api/payments/order", { method: "POST", body: JSON.stringify({ packageId: data.profile.packageId, amount: p.amount, plan: p.installment ? "emi" : "full", method: "upi" }) });
+      const order = await api<{ payment: ApiData; razorpayOrderId: string | null; keyId?: string; amountPaise: number; demo: boolean }>("/api/payments/order", {
+        method: "POST",
+        body: JSON.stringify({ packageId: data.profile.packageId, amount: p.amount, plan: p.installment ? "emi" : "full", method: "upi" }),
+      });
       const payment = order.payment;
-      await api("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: payment.id }) });
-      toast.push("Payment successful ✅");
-      refresh();
+      if (!order.demo && order.razorpayOrderId && order.keyId) {
+        await startRazorpayCheckout({
+          keyId: order.keyId,
+          orderId: order.razorpayOrderId,
+          amountPaise: order.amountPaise,
+          name: "Sri Mathru Driving School",
+          description: "Course payment",
+          contact: data.profile.phone,
+          email: data.profile.email,
+          onSuccess: async (razorpayPaymentId) => {
+            await api("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: payment.id, razorpayPaymentId }) });
+            toast.push("Payment successful — receipt sent ✅");
+            refresh();
+          },
+          onDismiss: () => setPaying(false),
+        });
+      } else {
+        await api("/api/payments/verify", { method: "POST", body: JSON.stringify({ paymentId: payment.id }) });
+        toast.push("Payment successful ✅");
+        refresh();
+      }
     } catch (e: ApiData) {
       toast.push(e.message, "error");
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -61,7 +89,7 @@ export function Overview({ data, refresh, onBook, onTab }: { data: ApiData; refr
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={() => payNow(pending[0])}>
+              <Button size="sm" loading={paying} onClick={() => payNow(pending[0])}>
                 Pay {formatINR(pending[0].amount)}
               </Button>
               <Button size="sm" variant="outline" onClick={() => onTab("payments")}>

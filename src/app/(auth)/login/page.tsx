@@ -35,9 +35,9 @@ function LoginInner() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api<{ redirect: string }>("/api/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
+      const res = await api<{ redirect: string }>("/api/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
       toast.push("Welcome back!");
-      router.push(next);
+      router.push(res.redirect ?? next);
       router.refresh();
     } catch (e: unknown) {
       toast.push(errMsg(e), "error");
@@ -66,7 +66,7 @@ function LoginInner() {
     try {
       const res = await api<{ redirect?: string; needsRegistration?: boolean }>("/api/auth/otp", { method: "POST", body: JSON.stringify({ action: "verify", identifier, code: otp }) });
       if (res.redirect) {
-        router.push(next);
+        router.push(res.redirect);
         router.refresh();
       } else {
         toast.push("No account found — please register first.", "error");
