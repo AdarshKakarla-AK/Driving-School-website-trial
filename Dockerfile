@@ -5,6 +5,7 @@ WORKDIR /app
 
 # ---- dependencies ----
 FROM base AS deps
+ENV HUSKY=0
 COPY package.json package-lock.json ./
 RUN npm ci
 
