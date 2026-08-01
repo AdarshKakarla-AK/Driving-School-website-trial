@@ -1,23 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { Phone, Mail, MapPin, Clock, MessageCircle, AtSign, Globe, Share2 } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, MessageCircle, AtSign, Globe, Share2, ShieldCheck } from "lucide-react";
 import { Logo } from "./Logo";
 
 export function Footer() {
   return (
-    <footer className="no-print bg-ink-950 text-ink-300">
+    <footer className="no-print bg-night-950 text-white/60">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="space-y-4">
             <Logo dark />
-            <p className="text-sm leading-relaxed text-ink-400">
+            <p className="text-sm leading-relaxed text-white/50">
               Bengaluru&apos;s premium driving school. Online booking, certified instructors and real progress tracking —
               from learner permit to license.
             </p>
             <div className="flex gap-2">
               {[AtSign, Globe, Share2].map((Icon, i) => (
-                <a key={i} href="#" className="rounded-lg bg-white/5 p-2 text-ink-300 transition hover:bg-brand-500 hover:text-white" aria-label="Social link">
+                <a key={i} href="#" className="rounded-lg bg-white/5 p-2 text-white/50 transition hover:bg-brand-500 hover:text-white" aria-label="Social link">
                   <Icon className="size-4" />
                 </a>
               ))}
@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm">
               {["Beginner Package", "Automatic Car Course", "License Assistance", "Night Driving", "Luxury Car Training"].map((c) => (
                 <li key={c}>
-                  <Link href="/courses" className="text-ink-400 transition hover:text-brand-400">
+                  <Link href="/courses" className="text-white/50 transition hover:text-brand-400">
                     {c}
                   </Link>
                 </li>
@@ -48,7 +48,7 @@ export function Footer() {
                 { href: "/login", label: "Student Login" },
               ].map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-ink-400 transition hover:text-brand-400">
+                  <Link href={l.href} className="text-white/50 transition hover:text-brand-400">
                     {l.label}
                   </Link>
                 </li>
@@ -58,18 +58,18 @@ export function Footer() {
 
           <div className="space-y-3 text-sm">
             <h4 className="font-display text-sm font-bold uppercase tracking-wider text-white">Reach Us</h4>
-            <p className="flex items-start gap-2.5 text-ink-400">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-brand-500" />
+            <p className="flex items-start gap-2.5 text-white/50">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-brand-400" />
               #12, 4th Cross, Banashankari 2nd Stage, Bengaluru - 560070
             </p>
-            <p className="flex items-center gap-2.5 text-ink-400">
-              <Phone className="size-4 shrink-0 text-brand-500" /> +91 90000 90000
+            <p className="flex items-center gap-2.5 text-white/50">
+              <Phone className="size-4 shrink-0 text-brand-400" /> +91 90000 90000
             </p>
-            <p className="flex items-center gap-2.5 text-ink-400">
-              <Mail className="size-4 shrink-0 text-brand-500" /> hello@srimathru.in
+            <p className="flex items-center gap-2.5 text-white/50">
+              <Mail className="size-4 shrink-0 text-brand-400" /> hello@srimathru.in
             </p>
-            <p className="flex items-center gap-2.5 text-ink-400">
-              <Clock className="size-4 shrink-0 text-brand-500" /> Mon-Sat · 6 AM – 8 PM
+            <p className="flex items-center gap-2.5 text-white/50">
+              <Clock className="size-4 shrink-0 text-brand-400" /> Mon-Sat · 6 AM – 8 PM
             </p>
             <a
               href="https://wa.me/919000090000"
@@ -82,10 +82,11 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-ink-500 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row">
           <p>© {new Date().getFullYear()} Sri Mathru Driving School. All rights reserved.</p>
-          <p>
-            GSTIN <span className="text-ink-300">29ABCDE1234F1Z5</span> · Demo experience — all data is sample data
+          <p className="flex items-center gap-1.5">
+            <ShieldCheck className="size-3.5 text-go-500" />
+            GSTIN <span className="text-white/60">29ABCDE1234F1Z5</span> · Demo experience — all data is sample data
           </p>
         </div>
       </div>

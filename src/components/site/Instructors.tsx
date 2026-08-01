@@ -7,22 +7,22 @@ import type { User } from "@/lib/db/types";
 
 export function Instructors({ instructors }: { instructors: User[] }) {
   return (
-    <section className="bg-white py-20">
+    <section className="bg-card py-20 border-y border-ink-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div className="max-w-xl">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600">Meet Your Mentors</span>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">Meet Your Mentors</span>
             <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">Learn from Bengaluru&apos;s best instructors</h2>
             <p className="mt-3 text-ink-500">Certified, background-verified and rated 4.8+ by thousands of students.</p>
           </div>
-          <Link href="/instructors" className="hidden items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 sm:inline-flex">
+          <Link href="/instructors" className="hidden items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 sm:inline-flex dark:text-brand-400">
             View all instructors <ArrowRight className="size-4" />
           </Link>
         </div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {instructors.slice(0, 4).map((inst) => (
-            <div key={inst.id} className="card-shadow group rounded-3xl border border-ink-100 bg-paper p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
+            <div key={inst.id} className="card-shadow group rounded-3xl border border-ink-100 bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
               <div className="flex items-center gap-4">
                 <Avatar name={inst.name} color={inst.avatarColor} size="lg" />
                 <div>

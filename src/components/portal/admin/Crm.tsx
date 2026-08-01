@@ -56,7 +56,7 @@ export function AdminCrm({ data, refresh }: { data: ApiData; refresh: () => void
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold capitalize", filter === s ? "border-ink-900 bg-ink-900 text-white" : "border-ink-200 bg-white text-ink-500 hover:border-ink-300")}
+            className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold capitalize", filter === s ? "border-night-900 bg-night-900 text-white" : "border-ink-200 bg-card text-ink-500 hover:border-ink-300")}
           >
             {s}
           </button>
@@ -98,7 +98,7 @@ export function AdminCrm({ data, refresh }: { data: ApiData; refresh: () => void
             </div>
             <div className="flex flex-wrap gap-2">
               {["new", "contacted", "demo", "registered", "active", "lost"].map((s) => (
-                <button key={s} onClick={() => update("status", { status: s })} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold capitalize", lead.status === s ? "border-ink-900 bg-ink-900 text-white" : "border-ink-200 text-ink-500")}>
+                <button key={s} onClick={() => update("status", { status: s })} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold capitalize", lead.status === s ? "border-night-900 bg-night-900 text-white" : "border-ink-200 text-ink-500")}>
                   {s}
                 </button>
               ))}

@@ -45,7 +45,7 @@ export function Certificates({ data }: { data: ApiData }) {
         certs.map((c: ApiData) => (
           <Card key={c.id} className="overflow-hidden">
             <div className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-start">
-              <div className="rounded-2xl border border-ink-100 bg-white p-3">
+              <div className="rounded-2xl border border-ink-100 bg-card p-3">
                 {qrs[c.code] ? <Image src={qrs[c.code]} alt="Verification QR" width={96} height={96} unoptimized className="size-24" /> : <div className="size-24 animate-pulse bg-ink-50" />}
               </div>
               <div className="flex-1">

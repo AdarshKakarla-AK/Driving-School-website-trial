@@ -194,7 +194,7 @@ export function SlotPicker({ avail, date, setDate, time, setTime }: { avail: Api
               }}
               className={cn(
                 "shrink-0 rounded-xl border px-3 py-2 text-center",
-                date === d.date ? "border-brand-500 bg-brand-50" : "border-ink-200 bg-white hover:border-brand-300",
+                date === d.date ? "border-brand-500 bg-brand-500/10" : "border-ink-200 bg-card hover:border-brand-300",
                 !free && "opacity-40"
               )}
             >
@@ -217,7 +217,7 @@ export function SlotPicker({ avail, date, setDate, time, setTime }: { avail: Api
                 time === s.time
                   ? "border-brand-500 bg-gradient-to-b from-brand-400 to-brand-600 text-white"
                   : s.status === "available"
-                    ? "border-ink-200 bg-white text-ink-700 hover:border-brand-300"
+                    ? "border-ink-200 bg-card text-ink-700 hover:border-brand-300"
                     : "border-ink-100 bg-ink-50 text-ink-300 line-through"
               )}
             >

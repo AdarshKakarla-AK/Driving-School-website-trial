@@ -5,6 +5,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const db = getDB();
+  const packages = db.packages.filter((p) => p.active !== false);
+  const instructors = db.users
+    .filter((u) => u.role === "instructor" && u.active)
+    .map((u) => {
+      const { passwordHash, ...safe } = u as typeof u & { passwordHash?: string };
+      return safe;
+    });
   const reviews = db.reviews
     .filter((r) => !r.private)
     .map((r) => ({ ...r, student: db.users.find((u) => u.id === r.studentId)?.name ?? "Student" }))
@@ -16,7 +23,7 @@ export async function GET() {
     lessonsCompleted: db.bookings.filter((b) => b.status === "completed").length,
     rating: db.reviews.length ? (db.reviews.reduce((a, r) => a + r.rating, 0) / db.reviews.length) : 5,
   };
-  return NextResponse.json({ reviews, stats, settings: db.settings });
+  return NextResponse.json({ packages, instructors, reviews, stats, settings: db.settings });
 }
 
 export async function POST(req: Request) {

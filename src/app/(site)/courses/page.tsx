@@ -35,7 +35,7 @@ export default function CoursesPage() {
 
       <div className="mt-12 space-y-8">
         {data.packages.map((p) => (
-          <div key={p.id} id={p.slug} className="card-shadow scroll-mt-24 rounded-3xl border border-ink-100 bg-white p-6 sm:p-8">
+          <div key={p.id} id={p.slug} className="card-shadow scroll-mt-24 rounded-3xl border border-ink-100 bg-card p-6 sm:p-8">
             <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
               <div>
                 <div className="flex flex-wrap items-center gap-3">

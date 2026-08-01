@@ -64,12 +64,12 @@ function InstructorPortalInner() {
           </p>
         </div>
         <div className="flex gap-2">
-          <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm card-shadow">
+          <div className="card-shadow flex items-center gap-2 rounded-xl bg-card px-4 py-2 text-sm">
             <Wallet className="size-4 text-go-600" />
             <span className="font-bold text-ink-900">{formatINR(data.earnings)}</span>
             <span className="text-xs text-ink-400">this month</span>
           </div>
-          <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm card-shadow">
+          <div className="card-shadow flex items-center gap-2 rounded-xl bg-card px-4 py-2 text-sm">
             <Clock3 className="size-4 text-brand-500" />
             <span className="font-bold text-ink-900">{data.lessonsThisMonth}</span>
             <span className="text-xs text-ink-400">lessons</span>
@@ -212,7 +212,7 @@ function NoteForm({ onSave }: { onSave: (n: ApiData) => void }) {
               type="button"
               key={s}
               onClick={() => setSkills((x) => ({ ...x, [s]: !x[s] }))}
-              className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", skills[s] ? "border-go-500 bg-go-500 text-white" : "border-ink-200 bg-white text-ink-600")}
+              className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", skills[s] ? "border-go-500 bg-go-500 text-white" : "border-ink-200 bg-card text-ink-600")}
             >
               {LABELS[s]}
             </button>

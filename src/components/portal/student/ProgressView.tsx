@@ -95,7 +95,7 @@ export function ProgressView({ data, refresh }: { data: ApiData; refresh: () => 
                 onClick={() => toggle(c.key, !done)}
                 className={cn(
                   "flex items-start gap-3 rounded-2xl border p-3.5 text-left transition",
-                  done ? "border-go-500/30 bg-go-500/5" : "border-ink-200 bg-white hover:border-brand-300"
+                  done ? "border-go-500/30 bg-go-500/5" : "border-ink-200 bg-card hover:border-brand-300"
                 )}
               >
                 <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", done ? "bg-go-500 text-white" : "border-2 border-ink-200")}>

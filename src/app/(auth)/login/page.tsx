@@ -109,7 +109,7 @@ function LoginInner() {
       <button
         onClick={googleLogin}
         disabled={googleLoading}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-ink-200 bg-white py-2.5 text-sm font-semibold text-ink-800 transition hover:bg-ink-50 disabled:opacity-60"
+        className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-ink-200 bg-card py-2.5 text-sm font-semibold text-ink-800 transition hover:bg-ink-50 disabled:opacity-60 dark:text-ink-100"
       >
         <svg width="18" height="18" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -194,13 +194,13 @@ function LoginInner() {
           <ShieldCheck className="size-3.5 text-brand-500" /> Demo accounts — one-click login
         </p>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <button onClick={() => demoLogin("admin")} disabled={loading} className="rounded-xl border border-ink-200 bg-white px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300">
+          <button onClick={() => demoLogin("admin")} disabled={loading} className="rounded-xl border border-ink-200 bg-card px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300 dark:text-ink-100">
             Admin
           </button>
-          <button onClick={() => demoLogin("instructor")} disabled={loading} className="rounded-xl border border-ink-200 bg-white px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300">
+          <button onClick={() => demoLogin("instructor")} disabled={loading} className="rounded-xl border border-ink-200 bg-card px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300 dark:text-ink-100">
             Instructor
           </button>
-          <button onClick={() => demoLogin("student")} disabled={loading} className="rounded-xl border border-ink-200 bg-white px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300">
+          <button onClick={() => demoLogin("student")} disabled={loading} className="rounded-xl border border-ink-200 bg-card px-2 py-2 text-xs font-semibold text-ink-700 hover:border-brand-300 dark:text-ink-100">
             Student
           </button>
         </div>

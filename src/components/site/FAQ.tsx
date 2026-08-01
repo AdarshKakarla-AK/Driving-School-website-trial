@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, MessageCircle } from "lucide-react";
+import { ChevronDown, MessageCircle, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FAQS = [
@@ -17,23 +17,52 @@ const FAQS = [
 
 export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
+  const [query, setQuery] = useState("");
+  const filtered = FAQS.filter(
+    (f) => f.q.toLowerCase().includes(query.toLowerCase()) || f.a.toLowerCase().includes(query.toLowerCase())
+  );
+
   return (
     <section className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
       <div className="text-center">
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600">FAQ</span>
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">FAQ</span>
         <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">Everything you need to know</h2>
+        <p className="mt-3 text-ink-500">Search or browse — most questions are answered in seconds.</p>
       </div>
-      <div className="mt-10 space-y-3">
-        {FAQS.map((f, i) => (
-          <div key={i} className="card-shadow overflow-hidden rounded-2xl border border-ink-100 bg-white">
-            <button className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left" onClick={() => setOpen(open === i ? null : i)}>
-              <span className="font-semibold text-ink-900">{f.q}</span>
-              <ChevronDown className={cn("size-5 shrink-0 text-ink-400 transition-transform", open === i && "rotate-180")} />
-            </button>
-            {open === i && <p className="border-t border-ink-100 px-5 py-4 text-sm leading-relaxed text-ink-500">{f.a}</p>}
-          </div>
-        ))}
+
+      <div className="relative mx-auto mt-8 max-w-xl">
+        <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-400" />
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(null);
+          }}
+          placeholder="Search questions, e.g. refund, licence, pickup…"
+          className="h-11 w-full rounded-xl border border-ink-200 bg-card pl-10 pr-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15"
+        />
       </div>
+
+      <div className="mt-8 space-y-3">
+        {filtered.map((f) => {
+          const idx = FAQS.indexOf(f);
+          return (
+            <div key={idx} className="card-shadow overflow-hidden rounded-2xl border border-ink-100 bg-card transition-colors">
+              <button className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left" onClick={() => setOpen(open === idx ? null : idx)}>
+                <span className="font-semibold text-ink-900">{f.q}</span>
+                <ChevronDown className={cn("size-5 shrink-0 text-ink-400 transition-transform", open === idx && "rotate-180")} />
+              </button>
+              {open === idx && <p className="border-t border-ink-100 px-5 py-4 text-sm leading-relaxed text-ink-500">{f.a}</p>}
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <p className="rounded-2xl border border-dashed border-ink-200 bg-card px-6 py-10 text-center text-sm text-ink-400">
+            No results for &quot;{query}&quot; — try a different keyword or ask our AI assistant below.
+          </p>
+        )}
+      </div>
+
       <p className="mt-8 text-center text-sm text-ink-500">
         Still have questions?{" "}
         <span className="inline-flex items-center gap-1 font-semibold text-go-600">

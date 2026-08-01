@@ -100,10 +100,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className={
               "card-shadow pointer-events-auto rounded-xl border px-4 py-3 text-sm font-medium shadow-lg " +
               (t.type === "success"
-                ? "border-go-500/20 bg-white text-ink-900"
+                ? "border-go-500/20 bg-card text-ink-900"
                 : t.type === "error"
-                  ? "border-stop-500/30 bg-white text-stop-500"
-                  : "border-ink-200 bg-white text-ink-700")
+                  ? "border-stop-500/30 bg-card text-stop-500"
+                  : "border-ink-200 bg-card text-ink-700")
             }
           >
             {t.message}

@@ -43,8 +43,8 @@ export default function AboutPage() {
           { icon: CalendarCheck2, value: `${stats.lessonsCompleted}+`, label: "Lessons completed" },
           { icon: Award, value: stats.rating.toFixed(1), label: "Average rating" },
         ].map((s) => (
-          <div key={s.label} className="rounded-3xl border border-ink-100 bg-white p-6 text-center card-shadow">
-            <div className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+          <div key={s.label} className="card-shadow rounded-3xl border border-ink-100 bg-card p-6 text-center">
+            <div className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
               <s.icon className="size-5" />
             </div>
             <p className="font-display mt-3 text-3xl font-bold text-ink-900">{s.value}</p>
@@ -65,7 +65,7 @@ export default function AboutPage() {
               { icon: HeartHandshake, title: "Female-friendly batches", body: "Dedicated female instructors and flexible batches, so everyone feels at home." },
             ].map((f) => (
               <div key={f.title} className="flex gap-4">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
                   <f.icon className="size-5" />
                 </div>
                 <div>
@@ -76,7 +76,7 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-        <div className="rounded-3xl bg-ink-900 p-8">
+        <div className="rounded-3xl bg-night-900 p-8">
           <h3 className="font-display text-2xl font-bold text-white">What students say</h3>
           <div className="mt-6 space-y-4">
             {topReviews.map((r: ApiData) => (
@@ -90,12 +90,12 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="mt-16 rounded-3xl border border-ink-100 bg-white p-8 card-shadow">
+      <div className="card-shadow mt-16 rounded-3xl border border-ink-100 bg-card p-8">
         <h2 className="font-display text-2xl font-bold text-ink-900">Our branches</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.settings.branches?.map((b: ApiData) => (
-            <div key={b.id} className="rounded-2xl border border-ink-100 p-5">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <div key={b.id} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-5 dark:bg-ink-900/40">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
                 <MapPin className="size-4.5" />
               </div>
               <h3 className="font-display mt-3 font-bold text-ink-900">{b.name}</h3>
@@ -106,7 +106,7 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl bg-ink-900 px-6 py-10 text-center">
+      <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl bg-night-900 px-6 py-10 text-center">
         <h2 className="font-display text-2xl font-bold text-white">Ready to start?</h2>
         <p className="max-w-md text-sm text-white/60">Your first lesson could be this week. Book online and pay securely.</p>
         <div className="flex flex-wrap justify-center gap-3">

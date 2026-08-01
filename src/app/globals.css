@@ -1,66 +1,160 @@
 @import "tailwindcss";
 
-@theme {
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---- Theme tokens -------------------------------------------------------
+   Semantic tokens flip between light and dark mode via CSS custom props.
+   The `night` scale is constant (never flips) and is used only for
+   always-dark surfaces: hero, footer, dark buttons, modal backdrops.      */
+
+@theme inline {
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-space-grotesk), system-ui, sans-serif;
 
-  --color-ink-50: #f6f8fb;
-  --color-ink-100: #edf0f5;
-  --color-ink-200: #d9e0ea;
-  --color-ink-300: #b6c1d1;
-  --color-ink-400: #8b99af;
-  --color-ink-500: #66748c;
-  --color-ink-600: #4b5970;
-  --color-ink-700: #374257;
-  --color-ink-800: #1f2a3d;
-  --color-ink-900: #101828;
-  --color-ink-950: #0b1120;
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
 
-  --color-brand-50: #fffbeb;
-  --color-brand-100: #fef3c7;
-  --color-brand-200: #fde68a;
-  --color-brand-300: #fcd34d;
-  --color-brand-400: #fbbf24;
-  --color-brand-500: #f59e0b;
-  --color-brand-600: #d97706;
-  --color-brand-700: #b45309;
-  --color-brand-800: #92400e;
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
 
-  --color-paper: #faf9f7;
-  --color-card: #ffffff;
-  --color-navy: #0b1120;
+  --color-paper: var(--paper);
+  --color-card: var(--card);
 
-  --color-go-500: #10b981;
-  --color-go-600: #059669;
-  --color-stop-500: #ef4444;
-  --color-warn-500: #f59e0b;
+  --color-night-950: var(--night-950);
+  --color-night-900: var(--night-900);
+  --color-night-800: var(--night-800);
+
+  --color-go-500: var(--go-500);
+  --color-go-600: var(--go-600);
+  --color-stop-500: var(--stop-500);
+  --color-warn-500: var(--warn-500);
+}
+
+:root {
+  --ink-50: #f6f8fb;
+  --ink-100: #edf0f5;
+  --ink-200: #d9e0ea;
+  --ink-300: #b6c1d1;
+  --ink-400: #8b99af;
+  --ink-500: #66748c;
+  --ink-600: #4b5970;
+  --ink-700: #374257;
+  --ink-800: #1f2a3d;
+  --ink-900: #101828;
+  --ink-950: #0b1120;
+
+  --brand-50: #fffbeb;
+  --brand-100: #fef3c7;
+  --brand-200: #fde68a;
+  --brand-300: #fcd34d;
+  --brand-400: #fbbf24;
+  --brand-500: #f59e0b;
+  --brand-600: #d97706;
+  --brand-700: #b45309;
+  --brand-800: #92400e;
+
+  --paper: #faf9f7;
+  --card: #ffffff;
+
+  --night-950: #090e1a;
+  --night-900: #0d1424;
+  --night-800: #16213a;
+
+  --go-500: #10b981;
+  --go-600: #059669;
+  --stop-500: #ef4444;
+  --warn-500: #f59e0b;
+}
+
+.dark {
+  --ink-50: #0a0f1c;
+  --ink-100: #141c2f;
+  --ink-200: #1e2a42;
+  --ink-300: #4a5a78;
+  --ink-400: #8b99af;
+  --ink-500: #a7b3c7;
+  --ink-600: #bac5d8;
+  --ink-700: #ccd5e4;
+  --ink-800: #e0e6f0;
+  --ink-900: #edf1f7;
+  --ink-950: #f7f9fc;
+
+  --brand-50: #2b2006;
+  --brand-100: #3b2c09;
+  --brand-200: #4f3a0c;
+  --brand-300: #6b4f12;
+  --brand-400: #fbbf24;
+  --brand-500: #f59e0b;
+  --brand-600: #fbbf24;
+  --brand-700: #fcd34d;
+  --brand-800: #fde68a;
+
+  --paper: #090e1a;
+  --card: #101829;
+
+  --go-500: #34d399;
+  --go-600: #6ee7b7;
+  --stop-500: #f87171;
+  --warn-500: #fbbf24;
 }
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans);
-  background: var(--color-paper);
-  color: var(--color-ink-900);
+  background: var(--paper);
+  color: var(--ink-900);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .font-display {
   font-family: var(--font-display);
 }
 
+::selection {
+  background: var(--brand-200);
+  color: var(--brand-900, var(--ink-900));
+}
+
+/* ---- Premium gradients & surfaces ---- */
 .text-gradient {
-  background: linear-gradient(120deg, #f59e0b 0%, #f97316 60%, #ef4444 110%);
+  background: linear-gradient(120deg, var(--brand-400) 0%, var(--brand-500) 55%, var(--brand-600) 105%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-cool {
+  background: linear-gradient(120deg, #38bdf8 0%, #818cf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .bg-grid {
-  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(to right, color-mix(in srgb, var(--ink-900) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--ink-900) 5%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
 }
 
@@ -71,18 +165,34 @@ body {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: color-mix(in srgb, var(--card) 72%, transparent);
   backdrop-filter: blur(12px);
 }
 
+/* ---- Shadows (elevated) ---- */
 .card-shadow {
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -8px rgba(16, 24, 40, 0.12);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -8px rgba(16, 24, 40, 0.1);
 }
 
 .card-shadow-lg {
-  box-shadow: 0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.06), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
 }
 
+.dark .card-shadow {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+.dark .card-shadow-lg {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 24px 48px -16px rgba(0, 0, 0, 0.65);
+}
+
+/* ---- Focus ring (accessible) ---- */
+:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* ---- Scrollbars ---- */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -91,13 +201,14 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d9e0ea;
+  background: var(--ink-200);
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b6c1d1;
+  background: var(--ink-300);
 }
 
+/* ---- Motion ---- */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
@@ -121,6 +232,26 @@ body {
 }
 .animate-shimmer {
   animation: shimmer 1.4s infinite linear;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.45s ease-out both;
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .no-print {

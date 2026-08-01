@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, CalendarDays, CreditCard, LineChart, Users, Car, Bell, LogOut, Menu, X, Bot, Wallet, FileText, MessageSquareText, Building2, Settings, TimerReset, BadgeCheck } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { Avatar } from "@/components/ui";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { api, useSession, type ApiData } from "@/lib/client";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +69,7 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
   return (
     <div className="flex min-h-screen bg-paper">
       {/* Sidebar */}
-      <aside className={cn("no-print fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-ink-100 bg-white transition-transform lg:translate-x-0", open ? "translate-x-0" : "-translate-x-full")}>
+      <aside className={cn("no-print fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-ink-100 bg-card transition-transform lg:translate-x-0", open ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex h-16 items-center justify-between border-b border-ink-100 px-4">
           <Link href="/">
             <Logo compact />
@@ -104,11 +105,11 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
           </Link>
         </div>
       </aside>
-      {open && <div className="no-print fixed inset-0 z-30 bg-ink-950/40 lg:hidden" onClick={() => setOpen(false)} />}
+      {open && <div className="no-print fixed inset-0 z-30 bg-night-950/60 lg:hidden" onClick={() => setOpen(false)} />}
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
-        <header className="no-print sticky top-0 z-20 flex h-16 items-center justify-between border-b border-ink-100 bg-white/85 px-4 backdrop-blur-xl sm:px-6">
+        <header className="no-print sticky top-0 z-20 flex h-16 items-center justify-between border-b border-ink-100 bg-card/85 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-3">
             <button className="rounded-lg p-2 text-ink-600 lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
               <Menu className="size-5" />
@@ -122,10 +123,11 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <div className="relative">
               <button
                 onClick={() => setNotifsOpen(!notifsOpen)}
-                className="relative rounded-xl border border-ink-200 bg-white p-2.5 text-ink-600 hover:bg-ink-50"
+                className="relative rounded-xl border border-ink-200 bg-card p-2.5 text-ink-600 hover:bg-ink-50"
                 aria-label="Notifications"
               >
                 <Bell className="size-4.5" />
@@ -138,7 +140,7 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
               {notifsOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setNotifsOpen(false)} />
-                  <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-xl">
+                  <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-ink-100 bg-card shadow-xl">
                     <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3">
                       <p className="text-sm font-bold text-ink-900">Notifications</p>
                       <button onClick={() => markRead()} className="text-xs font-semibold text-brand-600">
@@ -164,7 +166,7 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
 
             <div className="flex items-center gap-2">
               <Avatar name={user?.name ?? "U"} color={user?.avatarColor} size="sm" />
-              <button onClick={logout} className="rounded-xl border border-ink-200 bg-white p-2.5 text-ink-600 hover:bg-ink-50" title="Logout">
+              <button onClick={logout} className="rounded-xl border border-ink-200 bg-card p-2.5 text-ink-600 hover:bg-ink-50" title="Logout">
                 <LogOut className="size-4.5" />
               </button>
             </div>

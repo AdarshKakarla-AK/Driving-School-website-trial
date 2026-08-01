@@ -15,27 +15,28 @@ const STEPS = [
 
 export function Process() {
   return (
-    <section className="relative overflow-hidden bg-ink-950 py-20 text-white">
+    <section className="relative overflow-hidden bg-night-950 py-20 text-white">
       <div className="bg-grid-dark absolute inset-0" />
       <div className="absolute -left-24 top-0 h-80 w-80 rounded-full bg-brand-500/10 blur-3xl" />
+      <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-400">How It Works</span>
           <h2 className="font-display mt-3 text-3xl font-bold tracking-tight sm:text-4xl">From signup to license — fully automated</h2>
-          <p className="mt-3 text-ink-400">A premium, app-like experience. No calls, no queues, no confusion.</p>
+          <p className="mt-3 text-white/50">A premium, app-like experience. No calls, no queues, no confusion.</p>
         </div>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {STEPS.map((s, i) => (
-            <div key={s.title} className="group rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:border-brand-500/40 hover:bg-white/10">
+            <div key={s.title} className="group rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:-translate-y-1 hover:border-brand-500/40 hover:bg-white/10">
               <div className="flex items-center justify-between">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 shadow-lg">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 shadow-lg transition group-hover:scale-105">
                   <s.icon className="size-6" />
                 </div>
                 <span className="font-display text-4xl font-bold text-white/10">0{i + 1}</span>
               </div>
               <h3 className="font-display mt-5 text-lg font-bold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-400">{s.desc}</p>
+              <p className="mt-2 text-sm leading-relaxed text-white/50">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -44,7 +45,7 @@ export function Process() {
           <Link href="/register" className={buttonClasses("primary", "lg")}>
             Create Your Student Account — Free
           </Link>
-          <Link href="/courses" className={buttonClasses("white", "lg")}>
+          <Link href="/courses" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold text-night-900 shadow-sm transition-all hover:bg-white/90 active:scale-[0.98]">
             Compare Packages
           </Link>
         </div>

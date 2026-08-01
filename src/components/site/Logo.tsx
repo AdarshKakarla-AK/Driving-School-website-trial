@@ -13,15 +13,16 @@ export function SteeringWheel({ className }: { className?: string }) {
 export function Logo({ dark, className, compact }: { dark?: boolean; className?: string; compact?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className="relative flex size-10 items-center justify-center rounded-xl bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-sm">
+      <span className="relative flex size-10 items-center justify-center rounded-xl bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-sm ring-1 ring-black/5">
         <SteeringWheel className="size-6" />
+        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-white bg-go-500 dark:border-card" />
       </span>
       {!compact && (
         <span className="leading-tight">
           <span className={cn("font-display block text-lg font-bold tracking-tight", dark ? "text-white" : "text-ink-900")}>
             Sri Mathru
           </span>
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600">Driving School</span>
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-500">Driving School</span>
         </span>
       )}
     </span>

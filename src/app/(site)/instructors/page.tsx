@@ -37,7 +37,7 @@ export default function InstructorsPage() {
           <Card key={i.id} className="group overflow-hidden p-0">
             <div className="relative h-28 bg-gradient-to-br from-ink-800 to-ink-900">
               <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_80%,#14b8a6_0,transparent_50%),radial-gradient(circle_at_90%_20%,#f59e0b_0,transparent_40%)]" />
-              <div className="absolute -bottom-9 left-5 rounded-2xl border-4 border-white">
+              <div className="absolute -bottom-9 left-5 rounded-2xl border-4 border-card">
                 <Avatar name={i.name} size="lg" color={i.avatarColor} />
               </div>
               <Badge tone="green" className="absolute right-3 top-3">
@@ -75,8 +75,8 @@ export default function InstructorsPage() {
           { icon: Award, title: "98% pass rate", body: "Our license-prep instructors get students through RTO on the first attempt." },
           { icon: BookOpenCheck, title: "Ongoing training", body: "Instructors attend monthly skill refreshers to keep teaching quality high." },
         ].map((f) => (
-          <div key={f.title} className="rounded-3xl border border-ink-100 bg-white p-6 card-shadow">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <div key={f.title} className="card-shadow rounded-3xl border border-ink-100 bg-card p-6">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
               <f.icon className="size-5" />
             </div>
             <h3 className="font-display mt-3 font-bold text-ink-900">{f.title}</h3>
@@ -85,7 +85,7 @@ export default function InstructorsPage() {
         ))}
       </div>
 
-      <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl bg-ink-900 px-6 py-10 text-center">
+      <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl bg-night-900 px-6 py-10 text-center">
         <h2 className="font-display text-2xl font-bold text-white">Not sure who to pick?</h2>
         <p className="max-w-md text-sm text-white/60">Book a free demo session — try the instructor, then decide. No commitment.</p>
         <Link href="/book" className={buttonClasses("primary", "lg")}>

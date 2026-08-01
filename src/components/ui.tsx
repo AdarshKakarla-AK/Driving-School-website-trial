@@ -9,13 +9,13 @@ type Variant = "primary" | "dark" | "outline" | "ghost" | "danger" | "success" |
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-sm hover:from-brand-300 hover:to-brand-500 focus-visible:ring-brand-400",
-  dark: "bg-ink-900 text-white hover:bg-ink-800 focus-visible:ring-ink-700",
-  outline: "border border-ink-300 bg-white text-ink-800 hover:border-ink-400 hover:bg-ink-50 focus-visible:ring-ink-300",
+  primary: "bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-sm hover:from-brand-500 hover:to-brand-700 focus-visible:ring-brand-500",
+  dark: "bg-night-900 text-white hover:bg-night-800 focus-visible:ring-night-800",
+  outline: "border border-ink-300 bg-card text-ink-800 hover:border-brand-400 hover:bg-ink-50 focus-visible:ring-ink-300",
   ghost: "text-ink-700 hover:bg-ink-100 focus-visible:ring-ink-300",
   danger: "bg-stop-500 text-white hover:bg-stop-500/90 focus-visible:ring-stop-500/50",
   success: "bg-go-600 text-white hover:bg-go-500 focus-visible:ring-go-500/50",
-  white: "bg-white text-ink-900 shadow-sm hover:bg-ink-50 focus-visible:ring-white/60",
+  white: "bg-card text-ink-900 shadow-sm hover:bg-ink-50 focus-visible:ring-white/60",
 };
 
 const sizes: Record<Size, string> = {
@@ -26,7 +26,7 @@ const sizes: Record<Size, string> = {
 
 export function buttonClasses(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap",
+    "inline-flex items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap",
     variants[variant],
     sizes[size],
     className
@@ -51,12 +51,12 @@ export function Button({
 
 export function Badge({ children, className, tone = "brand" }: { children: React.ReactNode; className?: string; tone?: "brand" | "green" | "red" | "ink" | "blue" | "amber" }) {
   const tones = {
-    brand: "bg-brand-100 text-brand-800",
-    green: "bg-go-500/10 text-go-600",
-    red: "bg-stop-500/10 text-stop-500",
+    brand: "bg-brand-500/15 text-brand-600 dark:text-brand-400",
+    green: "bg-go-500/15 text-go-600",
+    red: "bg-stop-500/15 text-stop-500",
     ink: "bg-ink-100 text-ink-700",
-    blue: "bg-blue-100 text-blue-700",
-    amber: "bg-amber-500/10 text-amber-700",
+    blue: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+    amber: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   };
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[tone], className)}>
@@ -72,7 +72,6 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
     </div>
   );
 }
-
 export function Stat({ label, value, sub, icon }: { label: string; value: React.ReactNode; sub?: string; icon?: React.ReactNode }) {
   return (
     <Card className="p-4 sm:p-5">
@@ -94,8 +93,8 @@ export function Input({ className, label, hint, ...props }: React.InputHTMLAttri
       {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
       <input
         className={cn(
-          "h-10 w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900 placeholder:text-ink-400",
-          "focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:bg-ink-50",
+          "h-10 w-full rounded-xl border border-ink-200 bg-card px-3 text-sm text-ink-900 placeholder:text-ink-400",
+          "focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 disabled:bg-ink-50",
           className
         )}
         {...props}
@@ -111,7 +110,7 @@ export function Select({ className, label, children, ...props }: React.SelectHTM
       {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
       <select
         className={cn(
-          "h-10 w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100",
+          "h-10 w-full rounded-xl border border-ink-200 bg-card px-3 text-sm text-ink-900 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15",
           className
         )}
         {...props}
@@ -128,7 +127,7 @@ export function Textarea({ className, label, ...props }: React.TextareaHTMLAttri
       {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
       <textarea
         className={cn(
-          "w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100",
+          "w-full rounded-xl border border-ink-200 bg-card px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15",
           className
         )}
         {...props}
@@ -179,7 +178,7 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night-950/70 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -190,7 +189,7 @@ export function Modal({
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 12, opacity: 0 }}
             transition={{ type: "spring", duration: 0.35 }}
-            className={cn("w-full rounded-2xl bg-white p-6 shadow-2xl", wide ? "max-w-2xl" : "max-w-md")}
+            className={cn("w-full rounded-2xl bg-card p-6 shadow-2xl", wide ? "max-w-2xl" : "max-w-md")}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between gap-4">
@@ -252,7 +251,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: { id: string; label: Re
           onClick={() => onChange(t.id)}
           className={cn(
             "flex-1 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
-            active === t.id ? "bg-white text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-800"
+            active === t.id ? "bg-card text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-800"
           )}
         >
           {t.label}

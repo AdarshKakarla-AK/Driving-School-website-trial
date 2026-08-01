@@ -84,7 +84,7 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
           </h3>
           <div className="mt-3 space-y-2">
             {pending.map((p: ApiData) => (
-              <div key={p.id} className="flex items-center justify-between rounded-xl bg-white p-3">
+              <div key={p.id} className="flex items-center justify-between rounded-xl bg-card p-3">
                 <div>
                   <p className="text-sm font-semibold text-ink-800">
                     {p.installment ? `EMI installment ${p.installment}` : "Course payment"} · {formatINR(p.amount)}

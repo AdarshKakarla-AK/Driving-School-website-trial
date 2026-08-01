@@ -20,12 +20,12 @@ export function Packages({ packages }: { packages: CoursePackage[] }) {
         {featured.map((p) => (
           <div
             key={p.id}
-            className={`card-shadow relative flex flex-col rounded-3xl border bg-white p-6 transition-transform hover:-translate-y-1 ${
-              p.popular ? "border-brand-300 ring-1 ring-brand-200" : "border-ink-100"
+            className={`card-shadow relative flex flex-col rounded-3xl border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-lg ${
+              p.popular ? "border-brand-400/60 ring-1 ring-brand-400/30" : "border-ink-100"
             }`}
           >
             {p.popular && (
-              <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 px-3 py-1 text-xs font-bold text-white">
+              <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
                 Most Popular
               </span>
             )}
@@ -52,7 +52,7 @@ export function Packages({ packages }: { packages: CoursePackage[] }) {
             </div>
             {p.emi && (
               <p className="mt-1 text-xs text-ink-400">
-                or <span className="font-semibold text-brand-600">{formatINR(p.emi.downPayment)} down</span> + {p.emi.months} × {formatINR(p.emi.monthly)}
+                or <span className="font-semibold text-brand-600 dark:text-brand-400">{formatINR(p.emi.downPayment)} down</span> + {p.emi.months} × {formatINR(p.emi.monthly)}
               </p>
             )}
 
@@ -74,7 +74,7 @@ export function Packages({ packages }: { packages: CoursePackage[] }) {
       </div>
 
       <div className="mt-10 text-center">
-        <Link href="/courses" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700">
+        <Link href="/courses" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
           See all {packages.length} courses <ArrowRight className="size-4" />
         </Link>
       </div>

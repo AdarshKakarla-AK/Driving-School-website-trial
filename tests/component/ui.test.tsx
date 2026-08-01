@@ -15,7 +15,7 @@ describe("ui components", () => {
 
   it("Badge applies its tone and shows children", () => {
     render(<Badge tone="green">Active</Badge>);
-    expect(screen.getByText("Active")).toHaveClass("bg-go-500/10");
+    expect(screen.getByText("Active")).toHaveClass("bg-go-500/15");
   });
 
   it("Stars fills the correct number of stars", () => {

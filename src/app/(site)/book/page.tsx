@@ -189,8 +189,8 @@ function BookInner() {
                     setStep(2);
                   }}
                   className={cn(
-                    "card-shadow rounded-2xl border bg-white p-5 text-left transition hover:-translate-y-0.5",
-                    activePkg?.id === p.id ? "border-brand-400 ring-2 ring-brand-100" : "border-ink-100"
+                    "card-shadow rounded-2xl border bg-card p-5 text-left transition hover:-translate-y-0.5",
+                    activePkg?.id === p.id ? "border-brand-400 ring-2 ring-brand-400/20" : "border-ink-100"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -227,7 +227,7 @@ function BookInner() {
                         onClick={() => setDate(d.date)}
                         className={cn(
                           "shrink-0 rounded-xl border px-3 py-2.5 text-center transition",
-                          date === d.date ? "border-brand-500 bg-brand-50" : "border-ink-200 bg-white hover:border-brand-300",
+                          date === d.date ? "border-brand-500 bg-brand-500/10" : "border-ink-200 bg-card hover:border-brand-300",
                           !free && "opacity-40"
                         )}
                       >
@@ -250,7 +250,7 @@ function BookInner() {
                           time === s.time
                             ? "border-brand-500 bg-gradient-to-b from-brand-400 to-brand-600 text-white"
                             : s.status === "available"
-                              ? "border-ink-200 bg-white text-ink-700 hover:border-brand-300"
+                              ? "border-ink-200 bg-card text-ink-700 hover:border-brand-300"
                               : "border-ink-100 bg-ink-50 text-ink-300 line-through"
                         )}
                       >
@@ -308,7 +308,7 @@ function BookInner() {
                       onClick={() => setMethod(m.id as ApiData)}
                       className={cn(
                         "flex items-center gap-3 rounded-2xl border p-4 text-left transition",
-                        method === m.id ? "border-brand-400 bg-brand-50 ring-1 ring-brand-200" : "border-ink-200 hover:border-ink-300"
+                        method === m.id ? "border-brand-400 bg-brand-500/10 ring-1 ring-brand-400/30" : "border-ink-200 hover:border-ink-300"
                       )}
                     >
                       <span className={cn("rounded-xl p-2", method === m.id ? "bg-brand-500 text-white" : "bg-ink-100 text-ink-500")}>{m.icon}</span>

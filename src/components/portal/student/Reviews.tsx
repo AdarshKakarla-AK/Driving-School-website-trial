@@ -79,7 +79,7 @@ export function Reviews({ data, refresh }: { data: ApiData; refresh: () => void 
               onChange={(e) => setComment(e.target.value)}
               rows={3}
               placeholder="Tell us about your experience..."
-              className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+              className="w-full rounded-xl border border-ink-200 bg-card px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
             />
             <Button type="submit" disabled={!rating} loading={busy} size="lg" className="w-full">
               {!busy && <MessageSquareText className="size-4" />} Submit review
