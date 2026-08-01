@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, Check, CreditCard, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import { Badge, Button, Card, Input } from "@/components/ui";
+import { Confetti } from "@/components/Confetti";
 import { api, useSession, useToast, type ApiData } from "@/lib/client";
 import { startRazorpayCheckout } from "@/lib/razorpay-client";
 import { cn, formatINR, fullDayLabel, formatTime } from "@/lib/utils";
@@ -403,8 +404,9 @@ function SuccessScreen({ result, onDone }: { result: { booking: ApiData; payment
   return (
     <div className="mx-auto mt-10 max-w-lg">
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-b from-go-500 to-go-600 px-8 py-10 text-center text-white">
-          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-white/20">
+        <div className="relative overflow-hidden bg-gradient-to-b from-go-500 to-go-600 px-8 py-10 text-center text-white">
+          <Confetti />
+          <div className="relative mx-auto flex size-16 items-center justify-center rounded-full bg-white/20">
             <Check className="size-9" />
           </div>
           <h2 className="font-display mt-4 text-2xl font-bold">Booking Confirmed!</h2>

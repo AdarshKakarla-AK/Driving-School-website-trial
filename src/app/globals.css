@@ -242,6 +242,15 @@ body {
   animation: rise 0.45s ease-out both;
 }
 
+@keyframes confetti-fall {
+  0% { top: -12%; transform: rotate(0deg); opacity: 1; }
+  100% { top: 112%; transform: rotate(var(--confetti-rot, 540deg)); opacity: 0.85; }
+}
+.animate-confetti {
+  position: absolute;
+  animation: confetti-fall 3s ease-in forwards;
+}
+
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
   html {
