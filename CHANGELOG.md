@@ -37,10 +37,21 @@ husky + commitlint).
 - Deployment assets: `docker-compose.yml` healthcheck + env mapping,
   `deploy/nginx.conf` reverse proxy, `deploy/sri-mathru-driving.service` systemd
   unit, and `deploy/checklist.md` production launch checklist.
+- Analytics dashboard: profit-trend bar chart (revenue/expenses/profit, 6 months)
+  and instructor leaderboard (rating/reviews) on the admin overview.
+- Credential verification script: `npm run check:keys` validates
+  `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` against the Razorpay API and exits
+  non-zero on rejection (never prints the secret).
 
 ### Changed
 - Auth routes now write `login_*`, `otp_*`, and `register_*` audit entries.
 - `package.json` `prepare` script installs git hooks.
+- Student invoice list: newest-first sort, per-row payment method + issued date,
+  and a "Download all" button that avoids popup blockers via staggered downloads.
+- Dependency security: `npm audit` reduced to 0 vulnerabilities by overriding
+  `next`'s nested `postcss` (8.5.25) and `sharp` (0.35.3).
+- E2e availability check tolerates the seed's Sunday skips (asserts at least one
+  non-empty day rather than `days[0]`).
 
 ## [0.1.0] — 2026-07-29
 

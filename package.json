@@ -13,6 +13,7 @@
     "test:e2e": "next build && vitest run --config vitest.e2e.config.ts",
     "backup": "node scripts/backup.mjs",
     "restore": "node scripts/restore.mjs",
+    "check:keys": "node scripts/check-razorpay-keys.mjs",
     "prepare": "husky"
   },
   "dependencies": {

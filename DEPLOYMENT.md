@@ -111,6 +111,10 @@ endpoint verifies the HMAC-SHA256 `X-Razorpay-Signature` header, ignores unknown
 events, and is idempotent — repeated events never double-confirm. Until the secret
 is set, the endpoint returns `503`.
 
+Before going live, sanity-check your credentials with `npm run check:keys` (exits
+`0` only when the Razorpay API accepts them; prints the key's LIVE/TEST mode and
+never the secret).
+
 Paid bookings generate an invoice automatically; students download it as a PDF from
 the portal (`/api/portal/invoices/<no>/download`) and receive a receipt by email when
 `RESEND_API_KEY` is configured.

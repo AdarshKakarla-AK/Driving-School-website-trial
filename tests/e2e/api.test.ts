@@ -119,7 +119,7 @@ describe("public endpoints", () => {
     expect(res.status).toBe(200);
     const days = (res.json as { days: { date: string; slots: unknown[] }[] }).days;
     expect(days.length).toBe(3);
-    expect(days[0].slots.length).toBeGreaterThan(0);
+    expect(days.some((d) => d.slots.length > 0)).toBe(true);
   });
 
   it("serves a health check", async () => {

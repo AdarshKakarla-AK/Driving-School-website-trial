@@ -11,7 +11,8 @@ Work through this before (and after) going live. Tick items as you complete them
       `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
       Store them in `.env.production` (or the platform secret manager). Never commit them.
 - [ ] **Payments** — set `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` and verify a live
-      test payment. Check `GET /api/health` reports `"mode":"live"`.
+      test payment. Check `GET /api/health` reports `"mode":"live"`, and run
+      `npm run check:keys` (exits 0 only when the API accepts the credentials).
 - [ ] **Site URL** — set `NEXT_PUBLIC_SITE_URL` to the public HTTPS origin so
       sitemap, canonical links, and certificate URLs are absolute.
 - [ ] **Notifications** — set `EMAIL_WEBHOOK_URL`/`WHATSAPP_WEBHOOK_URL`, or the

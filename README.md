@@ -8,7 +8,7 @@ A full-featured driving school management platform — public marketing site, st
 
 - **Public site** — courses & packages, instructors, testimonials, FAQ, chat widget, contact & lead capture, certificate verification.
 - **Booking & scheduling** — 14-day rolling slot window (Sundays off), availability by instructor/vehicle type, bookings, reschedules, cancellations with policy-based fees, waitlist auto-notify.
-- **Payments** — Razorpay integration with full & EMI plans, invoices with GST, coupons. Runs in **demo mode** (fake orders, instant verify) when Razorpay keys are absent.
+- **Payments** — Razorpay integration (signed webhook for `payment.captured` / `payment.failed`) with full & EMI plans, invoices with GST, coupons. Runs in **demo mode** (fake orders, instant verify) when Razorpay keys are absent; `npm run check:keys` verifies credentials before launch.
 - **Student portal** — dashboard, bookings, payments, lesson progress tracking, documents, certificates, reviews, notifications.
 - **Admin portal** — overview & analytics, CRM (students & leads), bookings, finance (expenses, payroll), coupons, vehicles, automation & broadcast, settings.
 - **Automation & notifications** — in-app inbox + optional WhatsApp/email webhooks (fire-and-forget, never block requests). See `DEPLOYMENT.md` for the webhook contract.
@@ -46,6 +46,7 @@ Open http://localhost:3000. Demo accounts (seeded on first boot):
 | `npm run test:e2e`  | Build + end-to-end API tests against a throwaway DB|
 | `npm run backup`    | Snapshot the SQLite DB to `data/backups/`          |
 | `npm run restore -- <file>` | Validate + restore a backup snapshot       |
+| `npm run check:keys`| Verify `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` against the Razorpay API |
 
 ## Environment variables
 

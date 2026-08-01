@@ -38,6 +38,7 @@ Razorpay keys are set.
 | `npm run test:component` | Component tests |
 | `npm run test:e2e` | Build + end-to-end API tests |
 | `npm run backup` / `npm run restore` | Back up / restore the SQLite database |
+| `npm run check:keys` | Verify Razorpay credentials against the live API |
 
 ## Commit convention
 
