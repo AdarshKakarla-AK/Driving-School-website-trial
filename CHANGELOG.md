@@ -42,6 +42,9 @@ husky + commitlint).
 - Credential verification script: `npm run check:keys` validates
   `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` against the Razorpay API and exits
   non-zero on rejection (never prints the secret).
+- Live payment smoke test: `npm run smoke:live` runs the full payment path
+  against the real Razorpay API (order creation, webhook, invoice PDF) against
+  a scratch DB (`scripts/smoke-live.mjs`).
 
 ### Changed
 - Auth routes now write `login_*`, `otp_*`, and `register_*` audit entries.
@@ -52,6 +55,9 @@ husky + commitlint).
   `next`'s nested `postcss` (8.5.25) and `sharp` (0.35.3).
 - E2e availability check tolerates the seed's Sunday skips (asserts at least one
   non-empty day rather than `days[0]`).
+- Failed payments now release the slot: `markPaymentFailed` cancels the
+  pending-payment booking it was paying for and reopens the slot, so abandoned
+  checkouts stop holding slots hostage. Non-pending payments are left untouched.
 
 ## [0.1.0] — 2026-07-29
 

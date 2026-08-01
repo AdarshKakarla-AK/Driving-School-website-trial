@@ -47,6 +47,7 @@ Open http://localhost:3000. Demo accounts (seeded on first boot):
 | `npm run backup`    | Snapshot the SQLite DB to `data/backups/`          |
 | `npm run restore -- <file>` | Validate + restore a backup snapshot       |
 | `npm run check:keys`| Verify `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` against the Razorpay API |
+| `npm run smoke:live` | End-to-end live payment smoke test (see `scripts/smoke-live.mjs`) |
 
 ## Environment variables
 

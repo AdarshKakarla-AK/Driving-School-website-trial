@@ -225,6 +225,52 @@ describe("payments", () => {
     expect(() => markPaymentFailed(db, "nope")).toThrow("PAYMENT_NOT_FOUND");
   });
 
+  it("markPaymentFailed leaves a non-pending payment untouched", () => {
+    const db = makeSeed();
+    const { payments } = createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });
+    const paid = payments[0];
+    paid.status = "paid";
+    markPaymentFailed(db, paid.id);
+    expect(db.payments[0].status).toBe("paid");
+  });
+
+  it("markPaymentFailed cancels a pending booking and reopens its slot", () => {
+    const db = makeSeed();
+    const { booking } = createBooking(db, {
+      studentId: seedIds.student1,
+      packageId: seedIds.pkg,
+      date: futureDate(3),
+      time: "10:00",
+      amount: 12000,
+    });
+    expect(booking.status).toBe("pending_payment");
+    const slot = db.slots.find((s) => s.date === booking.date && s.time === booking.time && s.instructorId === booking.instructorId)!;
+    expect(slot.status).toBe("booked");
+
+    const { payments } = createOrder(db, { studentId: seedIds.student1, bookingId: booking.id, packageId: seedIds.pkg, method: "upi", amount: 12000 });
+    markPaymentFailed(db, payments[0].id);
+
+    expect(db.bookings.find((b) => b.id === booking.id)!.status).toBe("cancelled");
+    expect(db.bookings.find((b) => b.id === booking.id)!.cancelledReason).toBe("Payment failed");
+    expect(db.slots.find((s) => s.id === slot.id)!.status).toBe("available");
+  });
+
+  it("markPaymentFailed does not cancel an already-confirmed booking", () => {
+    const db = makeSeed();
+    const { booking } = createBooking(db, {
+      studentId: seedIds.student1,
+      packageId: seedIds.pkg,
+      date: futureDate(3),
+      time: "10:00",
+      amount: 12000,
+    });
+    booking.status = "confirmed";
+
+    const { payments } = createOrder(db, { studentId: seedIds.student1, bookingId: booking.id, packageId: seedIds.pkg, method: "upi", amount: 12000 });
+    markPaymentFailed(db, payments[0].id);
+    expect(db.bookings.find((b) => b.id === booking.id)!.status).toBe("confirmed");
+  });
+
   it("handleRazorpayWebhook marks a payment paid on payment.captured", () => {
     const db = makeSeed();
     const { payments } = createOrder(db, { studentId: seedIds.student1, packageId: seedIds.pkg, method: "upi" });

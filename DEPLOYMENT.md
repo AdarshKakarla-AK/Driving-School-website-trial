@@ -115,6 +115,13 @@ Before going live, sanity-check your credentials with `npm run check:keys` (exit
 `0` only when the Razorpay API accepts them; prints the key's LIVE/TEST mode and
 never the secret).
 
+Once the app is running in live mode (see "Running the app"), run
+`npm run smoke:live` against a scratch database to verify the whole payment path
+against the real Razorpay API: direct order creation, the app's order route, a
+signed webhook, booking confirmation, and PDF invoice download. See
+`scripts/smoke-live.mjs` for usage (`SMOKE_BASE` points at your server, default
+`http://localhost:3130`).
+
 Paid bookings generate an invoice automatically; students download it as a PDF from
 the portal (`/api/portal/invoices/<no>/download`) and receive a receipt by email when
 `RESEND_API_KEY` is configured.

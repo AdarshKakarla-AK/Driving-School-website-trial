@@ -203,8 +203,27 @@ async function emailInvoicePdf(db: DB, invoice: Invoice, student: User): Promise
 export function markPaymentFailed(db: DB, paymentId: string): Payment {
   const payment = db.payments.find((p) => p.id === paymentId);
   if (!payment) throw new Error("PAYMENT_NOT_FOUND");
+  if (payment.status !== "pending") return payment;
   payment.status = "failed";
+  releasePendingBooking(db, payment);
   return payment;
+}
+
+/**
+ * A failed payment must not hold a slot hostage: cancel the pending booking it
+ * was paying for and reopen its slot so other students can take it. Only
+ * touches bookings still awaiting payment.
+ */
+function releasePendingBooking(db: DB, payment: Payment): void {
+  if (!payment.bookingId) return;
+  const booking = db.bookings.find((b) => b.id === payment.bookingId);
+  if (!booking || booking.status !== "pending_payment") return;
+  booking.status = "cancelled";
+  booking.cancelledReason = "Payment failed";
+  booking.updatedAt = nowISO();
+  db.slots.forEach((s) => {
+    if (s.date === booking.date && s.time === booking.time && s.instructorId === booking.instructorId && s.status === "booked") s.status = "available";
+  });
 }
 
 export interface RazorpayWebhookResult {
