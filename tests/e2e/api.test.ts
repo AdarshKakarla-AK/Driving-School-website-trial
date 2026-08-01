@@ -343,8 +343,10 @@ describe("admin operations", () => {
   it("reads analytics and expense/payroll endpoints", async () => {
     const analytics = await api("/api/admin/analytics", { cookie: admin });
     expect(analytics.status).toBe(200);
-    const a = (analytics.json as { analytics: { totalRevenue: number; enrolledCount: number } }).analytics;
+    const a = (analytics.json as { analytics: { totalRevenue: number; enrolledCount: number; instructors: { name: string; rating: number }[] } }).analytics;
     expect(a.totalRevenue).toBeGreaterThan(0);
+    expect(a.instructors.length).toBeGreaterThan(0);
+    expect((analytics.json as { profitTrend: { month: string; revenue: number }[] }).profitTrend.length).toBe(6);
 
     const expenses = await api("/api/admin/expenses", { cookie: admin });
     expect(expenses.status).toBe(200);

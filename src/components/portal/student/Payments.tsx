@@ -54,6 +54,21 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
   };
 
   const pending = payments.filter((p: ApiData) => p.status === "pending");
+  const methodByPayment = new Map(payments.map((p: ApiData) => [p.id, p.method]));
+  const invoices = [...(data.invoices ?? [])].sort((a: ApiData, b: ApiData) => String(b.issuedAt).localeCompare(String(a.issuedAt)));
+
+  const downloadAll = () => {
+    invoices.forEach((i: ApiData, idx: number) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = `/api/portal/invoices/${i.number}/download`;
+        a.download = `${i.number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, idx * 300);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -122,20 +137,29 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
       </Card>
 
       <Card>
-        <h3 className="flex items-center gap-2 border-b border-ink-100 px-5 py-4 font-display font-bold text-ink-900">
-          <FileText className="size-5 text-brand-500" /> GST invoices
-        </h3>
+        <div className="flex items-center justify-between border-b border-ink-100 px-5 py-4">
+          <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+            <FileText className="size-5 text-brand-500" /> GST invoices
+          </h3>
+          {invoices.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={downloadAll}>
+              <Download className="size-3.5" /> Download all ({invoices.length})
+            </Button>
+          )}
+        </div>
         <div className="divide-y divide-ink-50">
-          {data.invoices.map((i: ApiData) => (
+          {invoices.map((i: ApiData) => (
             <div key={i.id} className="flex items-center justify-between px-5 py-3.5 text-sm">
               <div>
                 <p className="font-semibold text-ink-800">{i.number}</p>
-                <p className="text-xs text-ink-400">Issued {formatDate(i.issuedAt)}</p>
+                <p className="text-xs text-ink-400">
+                  Issued {formatDate(i.issuedAt)} · {String(methodByPayment.get(i.paymentId) ?? "upi").toUpperCase()}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <p className="font-bold text-ink-900">{formatINR(i.total)}</p>
-                  <p className="text-xs text-ink-400">GST ₹{Math.round(i.gst)} · {i.items?.[0]?.name}</p>
+                  <p className="text-xs text-ink-400">Total incl. GST ₹{Math.round(i.gst)} · {i.items?.[0]?.name}</p>
                 </div>
                 <a href={`/api/portal/invoices/${i.number}/download`} target="_blank" rel="noreferrer">
                   <Button size="sm" variant="ghost">
@@ -145,7 +169,7 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
               </div>
             </div>
           ))}
-          {data.invoices.length === 0 && <p className="px-5 py-8 text-center text-sm text-ink-400">No invoices yet.</p>}
+          {invoices.length === 0 && <p className="px-5 py-8 text-center text-sm text-ink-400">No invoices yet.</p>}
         </div>
       </Card>
     </div>

@@ -8,6 +8,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -15,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CalendarDays, IndianRupee, Layers, TrendingUp, Users, Zap } from "lucide-react";
+import { CalendarDays, IndianRupee, Layers, Star, TrendingUp, Trophy, Users, Zap } from "lucide-react";
 import { Avatar, Badge, Card } from "@/components/ui";
 import { cn, formatINR } from "@/lib/utils";
 import type { ApiData } from "@/lib/client";
@@ -189,6 +190,53 @@ export function AdminOverview({ data }: { data: ApiData }) {
                 <Bar dataKey="value" name="Leads" radius={[6, 6, 0, 0]} fill="#14b8a6" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card className="p-5 xl:col-span-2">
+          <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+            <TrendingUp className="size-4 text-go-600" /> Profit trend (6 months)
+          </h3>
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.profitTrend ?? []} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eceff1" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#8b98a5" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#8b98a5" }} tickFormatter={(v: ApiData) => `${(v as number) / 1000}k`} />
+                <Tooltip formatter={(v: ApiData) => formatINR(v)} contentStyle={{ borderRadius: 12, border: "1px solid #eceff1", fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="revenue" name="Revenue" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name="Expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="profit" name="Profit" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+            <Trophy className="size-4 text-amber-500" /> Instructor leaderboard
+          </h3>
+          <div className="mt-4 space-y-3">
+            {[...(a.instructors ?? [])]
+              .sort((x: ApiData, y: ApiData) => Number(y.rating) - Number(x.rating))
+              .map((i: ApiData, idx: number) => (
+                <div key={i.id} className="flex items-center gap-3 rounded-xl border border-ink-100 p-2.5">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-50 font-display text-xs font-bold text-brand-600">
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink-800">{i.name}</p>
+                    <p className="flex items-center gap-1 text-[11px] text-ink-400">
+                      <Star className="size-3 fill-amber-400 text-amber-400" /> {Number(i.rating).toFixed(1)} · {i.reviewCount} reviews
+                    </p>
+                  </div>
+                  <Badge tone="green">{i.activeToday} today</Badge>
+                </div>
+              ))}
+            {(a.instructors ?? []).length === 0 && <p className="text-sm text-ink-400">No instructors yet.</p>}
           </div>
         </Card>
       </div>
