@@ -31,5 +31,6 @@ test.describe("role-based portal access", () => {
     await page.getByRole("button", { name: "Admin", exact: true }).click();
     await page.waitForURL("**/portal/admin");
     await expect(page.getByText("Admin Console", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText("Analytics deep dive", { exact: true })).toBeVisible();
   });
 });

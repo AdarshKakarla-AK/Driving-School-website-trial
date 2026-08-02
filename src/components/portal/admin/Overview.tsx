@@ -16,8 +16,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CalendarDays, IndianRupee, Layers, Star, TrendingUp, Trophy, Users, Zap } from "lucide-react";
-import { Avatar, Badge, Card } from "@/components/ui";
+import { CalendarDays, Clock, CreditCard, IndianRupee, Layers, Lightbulb, Receipt, Share2, Star, TrendingUp, Trophy, Users, Zap } from "lucide-react";
+import { Avatar, Badge, Card, ProgressBar } from "@/components/ui";
 import { cn, formatINR } from "@/lib/utils";
 import type { ApiData } from "@/lib/client";
 
@@ -239,6 +239,175 @@ export function AdminOverview({ data }: { data: ApiData }) {
             {(a.instructors ?? []).length === 0 && <p className="text-sm text-ink-400">No instructors yet.</p>}
           </div>
         </Card>
+      </div>
+
+      <div className="border-t border-ink-100 pt-6">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="size-4 text-brand-500" />
+          <h2 className="font-display text-xl font-bold text-ink-900">Analytics deep dive</h2>
+          <Badge tone="brand">Beta</Badge>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-3">
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <TrendingUp className="size-4 text-go-600" /> Month-end forecast
+            </h3>
+            <p className="mt-3 font-display text-3xl font-bold text-ink-900">{formatINR(a.forecast.projectedMonthEnd)}</p>
+            <p className="text-xs font-medium text-ink-500">projected revenue</p>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-xs text-ink-500">
+                <span>{formatINR(a.forecast.revenueSoFar)} collected</span>
+                <span>{Math.round((a.forecast.revenueSoFar / Math.max(1, a.forecast.projectedMonthEnd)) * 100)}%</span>
+              </div>
+              <ProgressBar value={(a.forecast.revenueSoFar / Math.max(1, a.forecast.projectedMonthEnd)) * 100} />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+              <div className="rounded-xl bg-ink-50 p-2.5">
+                <p className="font-display text-sm font-bold text-ink-900">{formatINR(a.forecast.avgDaily)}</p>
+                <p className="text-[10px] text-ink-400">Avg / day</p>
+              </div>
+              <div className="rounded-xl bg-ink-50 p-2.5">
+                <p className="font-display text-sm font-bold text-go-600">{formatINR(a.forecast.projectedProfit)}</p>
+                <p className="text-[10px] text-ink-400">Projected profit</p>
+              </div>
+            </div>
+            <p className="mt-3 text-[11px] text-ink-400">Projection from the last 7-day average across {a.forecast.remainingDays} remaining day(s).</p>
+          </Card>
+
+          <Card className="p-5 xl:col-span-2">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <Clock className="size-4 text-brand-500" /> When students book (28 days)
+            </h3>
+            <div className="mt-4 h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={a.hourlyDemand} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eceff1" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#8b98a5" }} interval={3} />
+                  <YAxis tick={{ fontSize: 10, fill: "#8b98a5" }} allowDecimals={false} />
+                  <Tooltip cursor={{ fill: "rgba(20,199,183,0.06)" }} contentStyle={{ borderRadius: 12, border: "1px solid #eceff1", fontSize: 12 }} />
+                  <Bar dataKey="count" name="Bookings" radius={[4, 4, 0, 0]} fill="#28c7b7" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-3">
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <Layers className="size-4 text-violet-500" /> Lead funnel
+            </h3>
+            <div className="mt-4 space-y-3">
+              {a.leadFunnel.map((f: ApiData) => (
+                <div key={f.stage}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-ink-600">{f.stage}</span>
+                    <span className="text-ink-400">{f.count} · {f.pct}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+                    <div
+                      className={cn("h-full rounded-full", f.stage === "Won" ? "bg-gradient-to-r from-go-400 to-go-600" : f.stage === "Lost" ? "bg-red-400" : "bg-brand-400")}
+                      style={{ width: `${f.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {a.leadFunnel.every((f: ApiData) => f.count === 0) && <p className="text-sm text-ink-400">No leads yet.</p>}
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <CreditCard className="size-4 text-amber-500" /> Payment methods
+            </h3>
+            <div className="mt-4 flex items-center gap-4">
+              <div className="h-36 w-36 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={a.paymentMethods} dataKey="count" nameKey="name" innerRadius={40} outerRadius={68} paddingAngle={3}>
+                      {a.paymentMethods.map((_: ApiData, i: number) => (
+                        <Cell key={i} fill={["#14b8a6", "#7c3aed", "#f59e0b", "#3b82f6", "#ef4444", "#ec4899"][i % 6]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #eceff1", fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-1.5">
+                {a.paymentMethods.map((m: ApiData, i: number) => (
+                  <div key={m.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-ink-600">
+                      <span className="size-2 rounded-full" style={{ background: ["#14b8a6", "#7c3aed", "#f59e0b", "#3b82f6", "#ef4444", "#ec4899"][i % 6] }} />
+                      {m.name}
+                    </span>
+                    <span className="font-semibold text-ink-800">{m.count} · {formatINR(m.amount)}</span>
+                  </div>
+                ))}
+                {a.paymentMethods.length === 0 && <p className="text-sm text-ink-400">No paid payments yet.</p>}
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <Receipt className="size-4 text-red-400" /> Expenses this month
+            </h3>
+            <div className="mt-4 space-y-3">
+              {a.expensesByCategory.map((e: ApiData) => (
+                <div key={e.name} className="flex items-center justify-between text-xs">
+                  <span className="text-ink-600">{e.name}</span>
+                  <span className="font-semibold text-ink-800">{formatINR(e.amount)}</span>
+                </div>
+              ))}
+              {a.expensesByCategory.length === 0 && <p className="text-sm text-ink-400">No expenses recorded this month.</p>}
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-3">
+          <Card className="p-5 xl:col-span-2">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <CalendarDays className="size-4 text-brand-500" /> Coming week load
+            </h3>
+            <div className="mt-4 h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={a.weekPipeline} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eceff1" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#8b98a5" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#8b98a5" }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #eceff1", fontSize: 12 }} />
+                  <Bar dataKey="count" name="Lessons" radius={[6, 6, 0, 0]} fill="#14b8a6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+              <Share2 className="size-4 text-go-600" /> Referrals
+            </h3>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+              <div className="rounded-xl bg-ink-50 p-3">
+                <p className="font-display text-xl font-bold text-ink-900">{a.referrals.referredCount}</p>
+                <p className="text-[10px] text-ink-400">Referred students</p>
+              </div>
+              <div className="rounded-xl bg-ink-50 p-3">
+                <p className="font-display text-xl font-bold text-go-600">{formatINR(a.referrals.referralRevenue)}</p>
+                <p className="text-[10px] text-ink-400">Revenue</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {a.referrals.topCodes.map((c: ApiData) => (
+                <div key={c.code} className="flex items-center justify-between rounded-xl border border-ink-100 px-3 py-2 text-xs">
+                  <Badge tone="ink">{c.code}</Badge>
+                  <span className="font-semibold text-ink-700">{c.count} student{c.count > 1 ? "s" : ""}</span>
+                </div>
+              ))}
+              {a.referrals.topCodes.length === 0 && <p className="text-sm text-ink-400">No referrals yet.</p>}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
