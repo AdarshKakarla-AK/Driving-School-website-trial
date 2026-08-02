@@ -2,6 +2,7 @@ import "server-only";
 import { nowISO, today } from "./db/store";
 import { notify } from "./notify";
 import { paymentRemindersDue } from "./payments";
+import { weeklyReport, weeklySummaryText } from "./weekly";
 import type { DB, User } from "./db/types";
 
 export interface AutomationRunSummary {
@@ -9,6 +10,7 @@ export interface AutomationRunSummary {
   lessonReminders: number;
   licenseReminders: number;
   birthdays: number;
+  weeklyDigest: number;
 }
 
 const DAY_MS = 86400000;
@@ -100,11 +102,31 @@ export function runBirthdayReminders(db: DB): number {
   return sent;
 }
 
+export function runWeeklyDigest(db: DB, now: number = Date.now()): number {
+  const nowDate = new Date(now);
+  if (nowDate.getUTCDay() !== 1) return 0;
+  const report = weeklyReport(db, 1, nowDate);
+  const alreadySent = db.automationLogs.some(
+    (l) => l.type === "weekly_report" && l.summary.includes(report.current.start)
+  );
+  if (alreadySent) return 0;
+  const admins = db.users.filter((u) => u.role === "admin" && u.active);
+  let sent = 0;
+  for (const admin of admins) {
+    notify(db, admin, "weekly_report", "Weekly Report 📊",
+      `${db.settings.schoolName} — ${report.current.start} to ${report.current.end}\n\n${weeklySummaryText(report)}\n\nOpen the Reports tab in the Admin Console for the full breakdown and downloads.`,
+      { channels: ["email", "app"], meta: "/portal/admin?tab=reports" });
+    sent += 1;
+  }
+  return sent;
+}
+
 export function runDueAutomations(db: DB, now: number = Date.now()): AutomationRunSummary {
   return {
     paymentReminders: runPaymentReminders(db),
     lessonReminders: runLessonReminders(db, 24, now),
     licenseReminders: runLicenseReminders(db),
     birthdays: runBirthdayReminders(db),
+    weeklyDigest: runWeeklyDigest(db, now),
   };
 }

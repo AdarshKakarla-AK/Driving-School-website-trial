@@ -233,7 +233,8 @@ export type AutomationType =
   | "referral"
   | "otp"
   | "review"
-  | "vehicle_changed";
+  | "vehicle_changed"
+  | "weekly_report";
 
 export interface AutomationLog {
   id: string;

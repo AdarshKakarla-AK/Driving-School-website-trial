@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { makeSeed, seedIds } from "../helpers/seed";
 import { createOrder, verifyPayment } from "@/lib/payments";
-import { renderInvoicePdf, invoicePdfData } from "@/lib/pdf";
+import { renderInvoicePdf, invoicePdfData, renderWeeklyReportPdf } from "@/lib/pdf";
+import { weeklyReport } from "@/lib/weekly";
 import type { DB } from "@/lib/db/types";
 
 function paidInvoice(): { db: DB; invoiceId: string; invoiceNumber: string } {
@@ -60,5 +61,16 @@ describe("pdf", () => {
     expect(payment.invoiceNo).toBe(invoice.number);
     expect(invoice.total).toBe(payment.amount);
     expect(invoice.subtotal + invoice.gst).toBe(invoice.total);
+  });
+
+  it("renders a valid PDF for the weekly report", async () => {
+    const db = makeSeed();
+    const report = weeklyReport(db, 0);
+    const pdf = await renderWeeklyReportPdf({ schoolName: db.settings.schoolName, report });
+
+    expect(pdf).toBeInstanceOf(Buffer);
+    expect(pdf.length).toBeGreaterThan(1000);
+    expect(pdf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+    expect(pdf.toString("latin1")).toContain("/Type /Page");
   });
 });

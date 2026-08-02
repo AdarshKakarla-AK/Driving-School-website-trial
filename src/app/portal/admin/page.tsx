@@ -12,6 +12,7 @@ import { AdminVehicles } from "@/components/portal/admin/Vehicles";
 import { AdminFinance } from "@/components/portal/admin/Finance";
 import { AdminCrm } from "@/components/portal/admin/Crm";
 import { AdminAutomation } from "@/components/portal/admin/Automation";
+import { AdminReports } from "@/components/portal/admin/Reports";
 
 export default function AdminPortal() {
   return (
@@ -37,6 +38,7 @@ function AdminPortalInner() {
     { id: "finance", label: "Finance" },
     { id: "crm", label: "CRM" },
     { id: "automation", label: "Automation" },
+    { id: "reports", label: "Reports" },
   ];
 
   if (loading) return <PortalSkeleton />;
@@ -53,6 +55,7 @@ function AdminPortalInner() {
       {tab === "finance" && <AdminFinance data={data} refresh={refresh} />}
       {tab === "crm" && <AdminCrm data={data} refresh={refresh} />}
       {tab === "automation" && <AdminAutomation data={data} refresh={refresh} />}
+      {tab === "reports" && <AdminReports />}
     </div>
   );
 }

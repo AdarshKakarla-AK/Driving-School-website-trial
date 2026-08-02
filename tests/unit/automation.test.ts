@@ -4,6 +4,7 @@ import {
   runLessonReminders,
   runLicenseReminders,
   runBirthdayReminders,
+  runWeeklyDigest,
   runDueAutomations,
 } from "@/lib/automation";
 import { makeSeed, futureDate, seedIds } from "../helpers/seed";
@@ -199,12 +200,50 @@ describe("runDueAutomations", () => {
     });
 
     const summary = runDueAutomations(db, Date.parse(`${futureDate(1)}T09:00:00`) - 2 * 60 * 60 * 1000);
-    expect(summary).toEqual({
-      paymentReminders: 1,
-      lessonReminders: 1,
-      licenseReminders: 0,
-      birthdays: 1,
-    });
+    expect(summary.paymentReminders).toBe(1);
+    expect(summary.lessonReminders).toBe(1);
+    expect(summary.licenseReminders).toBe(0);
+    expect(summary.birthdays).toBe(1);
+    expect(typeof summary.weeklyDigest).toBe("number");
     expect(db.notifications.length).toBeGreaterThan(0);
+  });
+});
+
+describe("weekly digest", () => {
+  function mondayMorning(weeksAgo = 0): number {
+    const now = new Date();
+    const sinceMonday = (now.getUTCDay() + 6) % 7;
+    return Date.parse(
+      new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - sinceMonday - weeksAgo * 7)).toISOString().slice(0, 10) +
+        "T08:00:00Z"
+    );
+  }
+
+  it("sends the report to admins on Monday morning for the week that ended", () => {
+    const db = cloneDb(makeSeed());
+    const monday = mondayMorning();
+    expect(new Date(monday).getUTCDay()).toBe(1);
+
+    const sent = runWeeklyDigest(db, monday);
+    expect(sent).toBe(1);
+    const admin = db.users.find((u) => u.role === "admin")!;
+    const notifs = db.notifications.filter((n) => n.userId === admin.id && n.title === "Weekly Report 📊");
+    expect(notifs).toHaveLength(2);
+    expect(notifs.map((n) => n.channel).sort()).toEqual(["app", "email"]);
+    expect(db.automationLogs.filter((l) => l.type === "weekly_report")).toHaveLength(2);
+    expect(db.automationLogs.some((l) => l.type === "weekly_report" && l.channel === "email")).toBe(true);
+  });
+
+  it("does not re-send a digest already sent this week", () => {
+    const db = cloneDb(makeSeed());
+    const monday = mondayMorning();
+    expect(runWeeklyDigest(db, monday)).toBe(1);
+    expect(runWeeklyDigest(db, monday + 3600000)).toBe(0);
+  });
+
+  it("does not send on other days of the week", () => {
+    const db = cloneDb(makeSeed());
+    const tuesday = mondayMorning() + 86400000;
+    expect(runWeeklyDigest(db, tuesday)).toBe(0);
   });
 });

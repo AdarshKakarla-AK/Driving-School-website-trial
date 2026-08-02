@@ -1,7 +1,8 @@
 import "server-only";
 import type { DB } from "./db/types";
+import { weeklyReport } from "./weekly";
 
-export type ExportType = "finance" | "students" | "payroll";
+export type ExportType = "finance" | "students" | "payroll" | "weekly";
 
 export function csvEscape(value: unknown): string {
   const s = value === null || value === undefined ? "" : String(value);
@@ -79,7 +80,22 @@ export function payrollExport(db: DB): string {
   );
 }
 
-export function exportCsv(db: DB, type: string): string {
+export function weeklyExport(db: DB, offsetWeeks = 0): string {
+  const r = weeklyReport(db, offsetWeeks);
+  const rows: unknown[][] = [];
+  for (const m of r.metrics) {
+    const change = m.delta === null ? "" : `${m.delta > 0 ? "+" : ""}${m.delta}%`;
+    rows.push([m.label, m.thisWeek, m.lastWeek, change]);
+  }
+  rows.push(["Pipeline (next 7 days)", r.pipelineNext7, "", ""]);
+  if (r.topInstructor) rows.push(["Top instructor", `${r.topInstructor.name} (${r.topInstructor.lessons} lessons)`, "", ""]);
+  rows.push([]);
+  rows.push(["Day", "Date", "Revenue", ""]);
+  for (const d of r.revenueByDay) rows.push([d.label, d.date, d.revenue, ""]);
+  return toCsv(["Metric", "This Week", "Last Week", "Change"], rows);
+}
+
+export function exportCsv(db: DB, type: string, offsetWeeks = 0): string {
   switch (type) {
     case "finance":
       return financeExport(db);
@@ -87,6 +103,8 @@ export function exportCsv(db: DB, type: string): string {
       return studentsExport(db);
     case "payroll":
       return payrollExport(db);
+    case "weekly":
+      return weeklyExport(db, offsetWeeks);
     default:
       throw new Error(`Unknown export type: ${type}`);
   }

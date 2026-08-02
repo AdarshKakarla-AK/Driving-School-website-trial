@@ -33,4 +33,15 @@ test.describe("role-based portal access", () => {
     await expect(page.getByText("Admin Console", { exact: false }).first()).toBeVisible();
     await expect(page.getByText("Analytics deep dive", { exact: true })).toBeVisible();
   });
+
+  test("admin reports tab shows the weekly report with exports", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Admin", exact: true }).click();
+    await page.waitForURL("**/portal/admin");
+    await page.getByRole("button", { name: "Reports" }).click();
+    await expect(page.getByRole("heading", { name: "Weekly report" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "This week" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "PDF" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "CSV" })).toBeVisible();
+  });
 });

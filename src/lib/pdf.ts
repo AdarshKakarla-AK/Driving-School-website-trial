@@ -1,6 +1,7 @@
 import "server-only";
 import PDFDocument from "pdfkit";
 import type { DB, Invoice } from "./db/types";
+import type { WeeklyReport } from "./weekly";
 import { formatINR } from "./utils";
 
 export interface InvoicePdfData {
@@ -110,6 +111,99 @@ export function renderInvoicePdf(data: InvoicePdfData): Promise<Buffer> {
       `Thank you for choosing ${data.schoolName}. This is a computer-generated invoice and requires no signature.`,
       margin,
       doc.page.height - 64,
+      { width: contentWidth, align: "center" }
+    );
+
+    doc.end();
+  });
+}
+
+export function renderWeeklyReportPdf(data: { schoolName: string; report: WeeklyReport }): Promise<Buffer> {
+  const { schoolName, report } = data;
+  return new Promise<Buffer>((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 48 });
+    const chunks: Buffer[] = [];
+    doc.on("data", (c: Buffer) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    const pageWidth = doc.page.width;
+    const margin = 48;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 0;
+
+    doc.rect(margin, 40, contentWidth, 6).fill(BRAND);
+    y = 64;
+    doc.fillColor(INK).font("Helvetica-Bold").fontSize(20).text(schoolName, margin, y, { width: contentWidth / 2 });
+    doc.font("Helvetica").fontSize(9).fillColor(MUTED).text("Weekly report", margin, y + 26, { width: contentWidth / 2, lineGap: 2 });
+
+    doc.font("Helvetica-Bold").fontSize(14).fillColor(INK).text("WEEKLY REPORT", margin, y, { align: "right" });
+    doc.font("Helvetica").fontSize(9).fillColor(MUTED).text(
+      `${report.current.start} to ${report.current.end}`,
+      margin,
+      y + 18,
+      { align: "right" }
+    );
+
+    y = 120;
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(MUTED).text("METRICS (THIS WEEK VS LAST WEEK)", margin, y);
+    y += 24;
+
+    const colX = { label: margin, cur: 380, prev: pageWidth - margin - 240, delta: pageWidth - margin };
+    doc.rect(margin, y - 6, contentWidth, 22).fill("#FAFAF9");
+    doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(8.5);
+    doc.text("METRIC", colX.label, y, { width: 220 });
+    doc.text("THIS WEEK", colX.cur, y, { width: 100, align: "right" });
+    doc.text("LAST WEEK", colX.prev, y, { width: 110, align: "right" });
+    doc.text("CHANGE", colX.delta, y, { width: 110, align: "right" });
+    y += 18 + 10;
+
+    for (const m of report.metrics) {
+      const fmt = (n: number, suffix?: string) => (suffix === "INR" ? formatINR(n) : suffix === "%" ? `${n}%` : String(n));
+      const change = m.delta === null ? "—" : `${m.delta > 0 ? "+" : ""}${m.delta}%`;
+      doc.fillColor(INK).font("Helvetica").fontSize(10);
+      doc.text(m.label, colX.label, y, { width: 220 });
+      doc.text(fmt(m.thisWeek, m.suffix), colX.cur, y, { width: 100, align: "right" });
+      doc.text(fmt(m.lastWeek, m.suffix), colX.prev, y, { width: 110, align: "right" });
+      doc.fillColor(m.delta !== null && m.delta < 0 ? "#DC2626" : "#16A34A").font("Helvetica-Bold").fontSize(10);
+      doc.text(change, colX.delta, y, { width: 110, align: "right" });
+      doc.fillColor(INK);
+      y += 18;
+    }
+
+    if (report.topInstructor || report.pipelineNext7 > 0) {
+      y += 14;
+      doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(9).text("HIGHLIGHTS", margin, y);
+      y += 16;
+      doc.fillColor(INK).font("Helvetica").fontSize(10).text(
+        [
+          report.topInstructor ? `Top instructor: ${report.topInstructor.name} (${report.topInstructor.lessons} lessons)` : "",
+          `Upcoming in the next 7 days: ${report.pipelineNext7} lessons`,
+        ].filter(Boolean).join("\n"),
+        margin,
+        y,
+        { lineGap: 4 }
+      );
+    }
+
+    y = Math.max(y + 24, doc.page.height - 200);
+    const chartHeight = 110;
+    const max = Math.max(1, ...report.revenueByDay.map((d) => d.revenue));
+    const barWidth = (contentWidth - (report.revenueByDay.length - 1) * 4) / report.revenueByDay.length;
+    doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(9).text("DAILY REVENUE", margin, y - 16);
+    y += 8;
+    doc.rect(margin, y - 4, contentWidth, 1).fill(LINE);
+    report.revenueByDay.forEach((d, i) => {
+      const h = d.revenue > 0 ? Math.max(6, (d.revenue / max) * chartHeight) : 2;
+      const x = margin + i * (barWidth + 4);
+      doc.rect(x, y + chartHeight - h, barWidth, h).fill(d.revenue > 0 ? BRAND : "#E7E5E4");
+      doc.font("Helvetica").fontSize(7).fillColor(MUTED).text(d.label, x, y + chartHeight + 4, { width: barWidth, align: "center" });
+    });
+
+    doc.fillColor(MUTED).font("Helvetica").fontSize(8.5).text(
+      `Generated for ${schoolName} on ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}.`,
+      margin,
+      doc.page.height - 40,
       { width: contentWidth, align: "center" }
     );
 

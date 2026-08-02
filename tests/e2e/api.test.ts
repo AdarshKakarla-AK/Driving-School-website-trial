@@ -666,6 +666,46 @@ describe("CSV exports", () => {
   });
 });
 
+describe("Weekly report API", () => {
+  it("returns the weekly report JSON for admins", async () => {
+    const admin = await login("admin@srimathru.in", "admin123");
+    const res = await api("/api/admin/reports/weekly", { cookie: admin });
+    expect(res.status).toBe(200);
+    const report = (res.json as { report: { current: { start: string }; metrics: { key: string }[] } }).report;
+    expect(report.current.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(report.metrics.some((m) => m.key === "revenue")).toBe(true);
+    expect(report.metrics.some((m) => m.key === "attendance")).toBe(true);
+  });
+
+  it("supports offset for the previous week", async () => {
+    const admin = await login("admin@srimathru.in", "admin123");
+    const res = await api("/api/admin/reports/weekly?offset=1", { cookie: admin });
+    expect(res.status).toBe(200);
+    expect(res.json).not.toBeNull();
+  });
+
+  it("streams a CSV and a PDF download", async () => {
+    const admin = await login("admin@srimathru.in", "admin123");
+
+    const csv = await fetch(`${BASE}/api/admin/reports/weekly?format=csv`, { headers: { cookie: admin } });
+    expect(csv.headers.get("content-type")).toContain("text/csv");
+    expect(csv.headers.get("content-disposition")).toContain("weekly-report-");
+    expect(await csv.text()).toContain("Metric,This Week,Last Week,Change");
+
+    const pdf = await fetch(`${BASE}/api/admin/reports/weekly?format=pdf`, { headers: { cookie: admin } });
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers.get("content-type")).toContain("application/pdf");
+    const pdfBytes = await pdf.arrayBuffer();
+    expect(pdfBytes.byteLength).toBeGreaterThan(500);
+  });
+
+  it("blocks non-admin users", async () => {
+    const student = await login("rahul.sharma@gmail.com", "demo123");
+    const res = await api("/api/admin/reports/weekly", { cookie: student });
+    expect(res.status).toBe(403);
+  });
+});
+
 describe("Razorpay webhook", () => {
   const SECRET = "e2e-webhook-secret";
   const body = { event: "payment.captured", payload: { payment: { entity: { id: "pay_wh_e2e", order_id: "order_unknown", status: "captured" } } } };
