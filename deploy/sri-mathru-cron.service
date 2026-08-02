@@ -1,0 +1,19 @@
+# Oneshot that fires the /api/cron scheduler (rolls the slot window forward
+# and runs due automations). Paired with sri-mathru-cron.timer. Without a
+# scheduler hitting this endpoint, reminders/payment pings never fire.
+#
+#   sudo cp deploy/sri-mathru-cron.service deploy/sri-mathru-cron.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sri-mathru-cron.timer
+
+[Unit]
+Description=Sri Mathru automation cron job
+After=sri-mathru.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sri-mathru/sri-mathru.env
+# Point this at the public HTTPS URL (Caddy) so the request is authenticated
+# over TLS and takes the same path a real user would.
+ExecStart=/usr/bin/curl -fsS -m 60 -H "Authorization: Bearer ${CRON_SECRET}" https://your-domain.example.com/api/cron

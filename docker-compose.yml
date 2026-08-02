@@ -8,6 +8,7 @@ services:
       CRON_SECRET: ${CRON_SECRET:-}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
       WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
       EMAIL_WEBHOOK_URL: ${EMAIL_WEBHOOK_URL:-}
@@ -26,6 +27,24 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Drives the /api/cron scheduler (rolls the slot window forward and fires
+  # due automations). Without it, reminders never get sent in production.
+  scheduler:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERNAL_URL: ${CRON_INTERNAL_URL:-http://web:3000}
+    command: >
+      /bin/sh -c 'while true; do
+        curl -fsS -m 30 -H "Authorization: Bearer $${CRON_SECRET}" "$${CRON_INTERNAL_URL}/api/cron" >/dev/null 2>&1
+        || echo "[scheduler] cron run failed at $(date -u +%FT%TZ)";
+        sleep 1800;
+      done'
 
 volumes:
   smds-data:

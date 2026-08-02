@@ -1,0 +1,50 @@
+# Sri Mathru Driving School — systemd unit (Docker-based, image from GHCR).
+#
+# Place env values in /etc/sri-mathru/sri-mathru.env (chmod 600, owned by root).
+# Copy from deploy/.env.production.example. Caddy fronts this on 127.0.0.1:3000.
+#
+#   sudo cp deploy/sri-mathru.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sri-mathru
+
+[Unit]
+Description=Sri Mathru Driving School (web)
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+
+Environment=IMAGE=ghcr.io/adarshkakarla-ak/sri-mathru:latest
+EnvironmentFile=/etc/sri-mathru/sri-mathru.env
+
+# Pull on start so the container always runs the released image.
+ExecStartPre=-/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker network inspect sri-mathru || /usr/bin/docker network create sri-mathru
+ExecStartPre=-/usr/bin/docker rm -f sri-mathru
+
+ExecStart=/usr/bin/docker run --rm --name sri-mathru --network sri-mathru \
+  -p 127.0.0.1:3000:3000 \
+  --env-file /etc/sri-mathru/sri-mathru.env \
+  -v /var/lib/sri-mathru/data:/app/data \
+  --health-cmd "wget -qO- http://127.0.0.1:3000/api/health || exit 1" \
+  --health-interval 30s \
+  --health-retries 3 \
+  --health-start-period 10s \
+  ${IMAGE}
+
+ExecStop=/usr/bin/docker stop -t 15 sri-mathru
+
+# Hardening (no privileges needed for a plain web container).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sri-mathru/data
+
+[Install]
+WantedBy=multi-user.target
