@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CarFront, Fuel, Gauge, ShieldAlert, Sparkles } from "lucide-react";
-import { Badge, Button, Card, Modal } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, Modal } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
 
 
@@ -76,6 +76,11 @@ export function AdminVehicles({ data, refresh }: { data: ApiData; refresh: () =>
             </div>
           </Card>
         ))}
+        {vehicles.length === 0 && (
+          <div className="sm:col-span-2 xl:col-span-3">
+            <EmptyState icon={<CarFront className="size-6" />} title="No vehicles yet" subtitle="Add vehicles to start assigning them to lessons and bookings." />
+          </div>
+        )}
       </div>
 
       <Modal open={!!vehicle} onClose={() => setVehicle(null)} title={`${vehicle?.name} · ${vehicle?.regNumber}`}>

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CreditCard, Download, FileText, Receipt } from "lucide-react";
-import { Badge, Button, Card } from "@/components/ui";
+import { Badge, Button, Card, EmptyState } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
 import { startRazorpayCheckout } from "@/lib/razorpay-client";
 import { formatDate, formatINR } from "@/lib/utils";
@@ -132,7 +132,11 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
               </div>
             </div>
           ))}
-          {payments.length === 0 && <p className="px-5 py-8 text-center text-sm text-ink-400">No payments yet.</p>}
+          {payments.length === 0 && (
+            <div className="px-5 py-8">
+              <EmptyState icon={<Receipt className="size-6" />} title="No payments yet" subtitle="Payments you make for your course will show up here with GST invoices." />
+            </div>
+          )}
         </div>
       </Card>
 
@@ -169,7 +173,11 @@ export function Payments({ data, refresh }: { data: ApiData; refresh: () => void
               </div>
             </div>
           ))}
-          {invoices.length === 0 && <p className="px-5 py-8 text-center text-sm text-ink-400">No invoices yet.</p>}
+          {invoices.length === 0 && (
+            <div className="px-5 py-8">
+              <EmptyState icon={<FileText className="size-6" />} title="No invoices yet" subtitle="Once a payment is captured, its GST invoice appears here and stays downloadable." />
+            </div>
+          )}
         </div>
       </Card>
     </div>

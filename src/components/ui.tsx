@@ -242,6 +242,10 @@ export function EmptyState({ icon, title, subtitle }: { icon?: React.ReactNode; 
   );
 }
 
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("skeleton", className)} />;
+}
+
 export function Tabs({ tabs, active, onChange }: { tabs: { id: string; label: React.ReactNode }[]; active: string; onChange: (id: string) => void }) {
   return (
     <div className="flex gap-1 overflow-x-auto rounded-xl bg-ink-100 p-1">

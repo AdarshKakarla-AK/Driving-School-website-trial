@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FileUp, FileText, ShieldCheck } from "lucide-react";
-import { Badge, Button, Card, Input, Select } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, Input, Select } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
 import { formatDate } from "@/lib/utils";
 
@@ -97,7 +97,11 @@ export function Documents({ data, refresh }: { data: ApiData; refresh: () => voi
                 )}
               </div>
             ))}
-            {docs.length === 0 && <p className="py-8 text-center text-sm text-ink-400">No documents uploaded yet.</p>}
+            {docs.length === 0 && (
+              <div className="py-6">
+                <EmptyState icon={<FileText className="size-6" />} title="No documents uploaded yet" subtitle="Upload your learner permit, Aadhaar or other documents to keep your profile verified." />
+              </div>
+            )}
           </div>
         </div>
       </Card>

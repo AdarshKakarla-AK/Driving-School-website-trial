@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Tabs, Spinner } from "@/components/ui";
+import { Tabs } from "@/components/ui";
 import { useAdminData } from "@/components/portal/admin/useAdminData";
+import { PortalSkeleton, PortalError } from "@/components/portal/states";
 import { AdminOverview } from "@/components/portal/admin/Overview";
 import { AdminStudents } from "@/components/portal/admin/Students";
 import { AdminBookings } from "@/components/portal/admin/Bookings";
@@ -24,7 +25,7 @@ function AdminPortalInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "overview";
-  const { data, loading, refresh } = useAdminData();
+  const { data, loading, error, refresh } = useAdminData();
 
   const setTab = (t: string) => router.replace(`/portal/admin${t === "overview" ? "" : `?tab=${t}`}`);
 
@@ -38,13 +39,8 @@ function AdminPortalInner() {
     { id: "automation", label: "Automation" },
   ];
 
-  if (loading || !data) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    );
-  }
+  if (loading) return <PortalSkeleton />;
+  if (error || !data) return <PortalError onRetry={refresh} />;
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CalendarPlus, CheckCircle2, Clock, XCircle, RotateCcw } from "lucide-react";
-import { Badge, Button, Card, Modal, Spinner } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, Modal, Spinner } from "@/components/ui";
 import { api, useToast, type ApiData } from "@/lib/client";
 import { cn, dayLabel, formatINR, formatTime, isPast } from "@/lib/utils";
 
@@ -88,7 +88,7 @@ export function Bookings({ data, refresh }: { data: ApiData; refresh: () => void
       <div>
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-ink-400">Upcoming ({upcoming.length})</h2>
         {upcoming.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-ink-400">No upcoming lessons. Book one now to keep your progress rolling!</Card>
+          <EmptyState icon={<CalendarPlus className="size-6" />} title="No upcoming lessons" subtitle="Book one now to keep your progress rolling!" />
         ) : (
           <div className="space-y-3">
             {upcoming.map((b: ApiData) => {

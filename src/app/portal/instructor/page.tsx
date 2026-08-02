@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CarFront, CheckCircle2, Phone, Send, Star, Wallet, XCircle, Clock3 } from "lucide-react";
-import { Avatar, Badge, Button, Card, Input, Modal, Spinner, Tabs, Textarea } from "@/components/ui";
+import { Avatar, Badge, Button, Card, Input, Modal, Tabs, Textarea } from "@/components/ui";
 import { useDashboard } from "@/components/portal/useDashboard";
+import { PortalSkeleton, PortalError } from "@/components/portal/states";
 import { api, useToast, type ApiData } from "@/lib/client";
 import { cn, dayLabel, formatINR, formatTime, greeting } from "@/lib/utils";
 import type { LessonNote } from "@/lib/db/types";
@@ -21,7 +22,7 @@ function InstructorPortalInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "today";
-  const { data, loading, refresh } = useDashboard();
+  const { data, loading, error, refresh } = useDashboard();
   const toast = useToast();
 
   const setTab = (t: string) => router.replace(`/portal/instructor${t === "today" ? "" : `?tab=${t}`}`);
@@ -37,13 +38,8 @@ function InstructorPortalInner() {
     }
   };
 
-  if (loading || !data) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    );
-  }
+  if (loading) return <PortalSkeleton />;
+  if (error || !data) return <PortalError onRetry={refresh} />;
 
   const TABS = [
     { id: "today", label: `Today (${data.today?.length ?? 0})` },

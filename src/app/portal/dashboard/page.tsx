@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Tabs, Spinner } from "@/components/ui";
+import { Tabs } from "@/components/ui";
 import { useDashboard } from "@/components/portal/useDashboard";
+import { PortalSkeleton, PortalError } from "@/components/portal/states";
 import { Overview } from "@/components/portal/student/Overview";
 import { Bookings } from "@/components/portal/student/Bookings";
 import { ProgressView } from "@/components/portal/student/ProgressView";
@@ -24,7 +25,7 @@ function StudentDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "overview";
-  const { data, loading, refresh } = useDashboard();
+  const { data, loading, error, refresh } = useDashboard();
 
   const setTab = (t: string) => router.replace(`/portal/dashboard${t === "overview" ? "" : `?tab=${t}`}`);
 
@@ -38,13 +39,8 @@ function StudentDashboardInner() {
     { id: "reviews", label: "Reviews" },
   ];
 
-  if (loading || !data) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    );
-  }
+  if (loading) return <PortalSkeleton />;
+  if (error || !data) return <PortalError onRetry={refresh} />;
 
   return (
     <div className="space-y-6">

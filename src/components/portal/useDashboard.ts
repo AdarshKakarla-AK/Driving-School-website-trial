@@ -6,13 +6,16 @@ import { api, type ApiData } from "@/lib/client";
 export function useDashboard() {
   const [data, setData] = React.useState<ApiData>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
   const refresh = React.useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const d = await api("/api/dashboard");
       setData(d);
     } catch {
       setData(null);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -24,7 +27,10 @@ export function useDashboard() {
         if (mounted) setData(d);
       })
       .catch(() => {
-        if (mounted) setData(null);
+        if (mounted) {
+          setData(null);
+          setError(true);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -33,5 +39,5 @@ export function useDashboard() {
       mounted = false;
     };
   }, []);
-  return { data, loading, refresh };
+  return { data, loading, error, refresh };
 }

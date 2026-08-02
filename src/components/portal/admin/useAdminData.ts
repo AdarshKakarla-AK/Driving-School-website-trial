@@ -6,9 +6,11 @@ import { api, type ApiData } from "@/lib/client";
 export function useAdminData() {
   const [data, setData] = React.useState<ApiData>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
 
   const refresh = React.useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const [dash, students, bookings, vehicles, leads, expenses, payroll, analytics] = await Promise.all([
         api<ApiData>("/api/dashboard"),
@@ -23,6 +25,7 @@ export function useAdminData() {
       setData({ ...dash, ...students, ...bookings, ...vehicles, ...leads, ...expenses, ...payroll, ...analytics });
     } catch {
       setData(null);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -44,7 +47,10 @@ export function useAdminData() {
         if (mounted) setData({ ...dash, ...students, ...bookings, ...vehicles, ...leads, ...expenses, ...payroll, ...analytics });
       })
       .catch(() => {
-        if (mounted) setData(null);
+        if (mounted) {
+          setData(null);
+          setError(true);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -54,5 +60,5 @@ export function useAdminData() {
     };
   }, []);
 
-  return { data, loading, refresh };
+  return { data, loading, error, refresh };
 }
