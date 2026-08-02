@@ -154,6 +154,17 @@ describe("authentication", () => {
     const instructor = await login("ravi@srimathru.in", "demo123");
     const i = await api("/api/dashboard", { cookie: instructor });
     expect((i.json as { profile: { role: string } }).profile.role).toBe("instructor");
+    const instDash = i.json as {
+      schedule: unknown[];
+      payroll: unknown[];
+      earningsTrend: unknown[];
+      salaryPerLesson: number;
+      commissionPct: number;
+    };
+    expect(Array.isArray(instDash.schedule)).toBe(true);
+    expect(Array.isArray(instDash.payroll)).toBe(true);
+    expect(instDash.earningsTrend).toHaveLength(6);
+    expect(instDash.salaryPerLesson).toBeGreaterThan(0);
 
     const student = await login("rahul.sharma@gmail.com", "demo123");
     const s = await api("/api/dashboard", { cookie: student });

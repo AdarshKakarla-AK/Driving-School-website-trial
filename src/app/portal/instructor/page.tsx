@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CarFront, CheckCircle2, Phone, Send, Star, Wallet, XCircle, Clock3 } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CalendarDays, CarFront, CheckCircle2, ChevronLeft, ChevronRight, Phone, Send, Star, Wallet, XCircle, Clock3 } from "lucide-react";
 import { Avatar, Badge, Button, Card, Input, Modal, Tabs, Textarea } from "@/components/ui";
 import { useDashboard } from "@/components/portal/useDashboard";
 import { PortalSkeleton, PortalError } from "@/components/portal/states";
@@ -43,6 +44,7 @@ function InstructorPortalInner() {
 
   const TABS = [
     { id: "today", label: `Today (${data.today?.length ?? 0})` },
+    { id: "schedule", label: "Schedule" },
     { id: "upcoming", label: "Upcoming" },
     { id: "students", label: "My Students" },
     { id: "earnings", label: "Earnings" },
@@ -78,6 +80,7 @@ function InstructorPortalInner() {
       {tab === "today" && (
         <TodayView data={data} onMark={mark} refresh={refresh} />
       )}
+      {tab === "schedule" && <ScheduleView schedule={data.schedule ?? []} />}
       {tab === "upcoming" && (
         <div className="space-y-3">
           {data.upcoming.map((b: ApiData) => (
@@ -253,18 +256,127 @@ function StudentsView({ students }: { students: ApiData[] }) {
   );
 }
 
+function ScheduleView({ schedule }: { schedule: ApiData[] }) {
+  const [cursor, setCursor] = React.useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const byDate = React.useMemo(() => {
+    const m = new Map<string, ApiData[]>();
+    schedule.forEach((b: ApiData) => {
+      const list = m.get(b.date) ?? [];
+      list.push(b);
+      m.set(b.date, list);
+    });
+    m.forEach((list) => list.sort((a: ApiData, b: ApiData) => a.time.localeCompare(b.time)));
+    return m;
+  }, [schedule]);
+
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startPad = new Date(year, month, 1).getDay();
+  const monthLabel = cursor.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const cells: (number | null)[] = [...Array(startPad).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const selectedLessons = selected ? (byDate.get(selected) ?? []) : [];
+  const dateOf = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-5">
+      <Card className="p-5 lg:col-span-3">
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-display font-bold text-ink-900">
+            <CalendarDays className="size-4 text-brand-500" /> {monthLabel}
+          </h3>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setCursor(new Date(year, month - 1, 1))}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setCursor(new Date(year, month + 1, 1))}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase text-ink-400">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+        </div>
+        <div className="mt-1 grid grid-cols-7 gap-1">
+          {cells.map((day, i) => {
+            if (day === null) return <div key={`pad-${i}`} />;
+            const date = dateOf(day);
+            const lessons = byDate.get(date) ?? [];
+            const isToday = date === today;
+            const isSelected = date === selected;
+            return (
+              <button
+                key={date}
+                onClick={() => setSelected(date)}
+                className={cn(
+                  "flex aspect-square flex-col items-center justify-center rounded-xl border text-sm transition",
+                  isSelected
+                    ? "border-brand-500 bg-brand-500 text-white"
+                    : isToday
+                      ? "border-brand-400 bg-brand-50 text-brand-700"
+                      : lessons.length > 0
+                        ? "border-ink-200 bg-card font-semibold text-ink-800 hover:border-brand-300"
+                        : "border-transparent hover:bg-ink-50"
+                )}
+              >
+                <span>{day}</span>
+                {lessons.length > 0 && (
+                  <span className={cn("text-[10px] font-bold", isSelected ? "text-white/80" : "text-go-600")}>
+                    {lessons.length} lesson{lessons.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card className="p-5 lg:col-span-2">
+        <h3 className="font-display font-bold text-ink-900">
+          {selected ? new Date(selected + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }) : "Pick a day"}
+        </h3>
+        <div className="mt-3 space-y-2.5">
+          {selectedLessons.map((b: ApiData) => (
+            <div key={b.id} className="flex items-center justify-between rounded-xl border border-ink-100 p-3">
+              <div>
+                <p className="text-sm font-semibold text-ink-800">{formatTime(b.time)}</p>
+                <p className="text-xs text-ink-500">{b.student}{b.package ? ` · ${b.package}` : ""}</p>
+              </div>
+              <Badge tone={b.status === "completed" ? "green" : b.status === "confirmed" || b.status === "upcoming" ? "blue" : "amber"} className="capitalize">{b.status.replace("_", " ")}</Badge>
+            </div>
+          ))}
+          {selected && selectedLessons.length === 0 && <p className="text-sm text-ink-400">No lessons on this day.</p>}
+          {!selected && <p className="text-sm text-ink-400">Select a day to see its lessons.</p>}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function EarningsView({ data }: { data: ApiData }) {
   const att = data.attendance ?? {};
   const total = Object.values(att).reduce((a: ApiData, b: ApiData) => a + b, 0) as number;
+  const base = Number(data.earningsBase ?? 0);
+  const commission = Number(data.commissionThisMonth ?? 0);
+  const pct = Number(data.commissionPct ?? 0);
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <Card className="p-5 lg:col-span-2">
-        <h3 className="font-display font-bold text-ink-900">Monthly summary</h3>
-        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+        <h3 className="font-display font-bold text-ink-900">This month</h3>
+        <div className="mt-4 grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
           {[
-            { label: "Lessons", value: data.lessonsThisMonth },
+            { label: "Lessons", value: String(data.lessonsThisMonth) },
             { label: "Attendance rate", value: total ? `${Math.round(((att.present ?? 0) / total) * 100)}%` : "—" },
-            { label: "Earnings", value: formatINR(data.earnings) },
+            { label: "Base pay", value: formatINR(base) },
+            { label: "Commission", value: formatINR(commission) },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl bg-ink-50 p-4">
               <p className="font-display text-xl font-bold text-ink-900">{s.value}</p>
@@ -272,22 +384,63 @@ function EarningsView({ data }: { data: ApiData }) {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs text-ink-400">
-          Earnings = {formatINR(data.profile.salaryPerLesson ?? 500)}/lesson + {data.profile.commissionPct}% commission on package payments. Payroll runs on the 1st of every month.
+        <div className="mt-4 flex items-center justify-between rounded-2xl bg-go-500/10 p-4">
+          <span className="font-semibold text-ink-800">Total earnings</span>
+          <span className="font-display text-2xl font-bold text-go-600">{formatINR(base + commission)}</span>
+        </div>
+        <p className="mt-3 text-xs text-ink-400">
+          {data.lessonsThisMonth} lessons × {formatINR(data.salaryPerLesson ?? 500)} + {pct}% commission on captured package payments this month. Payroll runs on the 1st of every month.
         </p>
-      </Card>
-      <Card className="p-5">
-        <h3 className="font-display font-bold text-ink-900">Recent notes</h3>
-        <div className="mt-3 space-y-3">
-          {data.recentNotes.slice(0, 5).map((n: ApiData) => (
-            <div key={n.id} className="rounded-xl bg-ink-50 p-3 text-xs">
-              <p className="font-semibold text-ink-800">{new Date(n.date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
-              <p className="mt-1 text-ink-500">&quot;{n.note}&quot;</p>
-            </div>
-          ))}
-          {data.recentNotes.length === 0 && <p className="text-sm text-ink-400">No notes yet.</p>}
+
+        <h4 className="mt-6 font-display font-bold text-ink-900">Earnings trend (6 months)</h4>
+        <div className="mt-3 h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.earningsTrend ?? []} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eceff1" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#8b98a5" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#8b98a5" }} tickFormatter={(v: ApiData) => `${(v as number) / 1000}k`} />
+              <Tooltip formatter={(v: ApiData) => formatINR(v)} contentStyle={{ borderRadius: 12, border: "1px solid #eceff1", fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="base" name="Base" stackId="e" fill="#14b8a6" />
+              <Bar dataKey="commission" name="Commission" stackId="e" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </Card>
+
+      <div className="space-y-6">
+        <Card className="p-5">
+          <h3 className="font-display font-bold text-ink-900">Payroll history</h3>
+          <div className="mt-3 space-y-2.5">
+            {(data.payroll ?? []).map((p: ApiData) => (
+              <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink-100 p-3">
+                <div>
+                  <p className="text-sm font-semibold text-ink-800">{p.month}</p>
+                  <p className="text-xs text-ink-400">{p.lessons} lessons · {formatINR(p.base)} base</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-ink-900">{formatINR(p.total)}</p>
+                  <Badge tone={p.status === "paid" ? "green" : "amber"} className="capitalize">{p.status}</Badge>
+                </div>
+              </div>
+            ))}
+            {(data.payroll ?? []).length === 0 && <p className="text-sm text-ink-400">No payroll runs yet. The admin processes payouts every month.</p>}
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <h3 className="font-display font-bold text-ink-900">Recent notes</h3>
+          <div className="mt-3 space-y-3">
+            {data.recentNotes.slice(0, 5).map((n: ApiData) => (
+              <div key={n.id} className="rounded-xl bg-ink-50 p-3 text-xs">
+                <p className="font-semibold text-ink-800">{new Date(n.date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+                <p className="mt-1 text-ink-500">&quot;{n.note}&quot;</p>
+              </div>
+            ))}
+            {data.recentNotes.length === 0 && <p className="text-sm text-ink-400">No notes yet.</p>}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
