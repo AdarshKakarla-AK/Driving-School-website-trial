@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, MessageCircle, Search } from "lucide-react";
+import { Eyebrow } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 const FAQS = [
@@ -23,15 +24,15 @@ export function FAQ() {
   );
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
+    <section className="mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
       <div className="text-center">
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">FAQ</span>
+        <Eyebrow className="justify-center">FAQ</Eyebrow>
         <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">Everything you need to know</h2>
         <p className="mt-3 text-ink-500">Search or browse — most questions are answered in seconds.</p>
       </div>
 
       <div className="relative mx-auto mt-8 max-w-xl">
-        <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-400" />
+        <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-400" />
         <input
           value={query}
           onChange={(e) => {
@@ -39,20 +40,33 @@ export function FAQ() {
             setOpen(null);
           }}
           placeholder="Search questions, e.g. refund, licence, pickup…"
-          className="h-11 w-full rounded-xl border border-ink-200 bg-card pl-10 pr-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15"
+          className="h-12 w-full rounded-2xl border border-ink-200 bg-card pl-11 pr-4 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
         />
       </div>
 
       <div className="mt-8 space-y-3">
         {filtered.map((f) => {
           const idx = FAQS.indexOf(f);
+          const isOpen = open === idx;
           return (
-            <div key={idx} className="card-shadow overflow-hidden rounded-2xl border border-ink-100 bg-card transition-colors">
-              <button className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left" onClick={() => setOpen(open === idx ? null : idx)}>
+            <div
+              key={idx}
+              className={cn(
+                "card-shadow overflow-hidden rounded-2xl border bg-card transition-all duration-200",
+                isOpen ? "border-brand-300/60 ring-1 ring-brand-400/20" : "border-ink-100"
+              )}
+            >
+              <button
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6"
+                onClick={() => setOpen(isOpen ? null : idx)}
+                aria-expanded={isOpen}
+              >
                 <span className="font-semibold text-ink-900">{f.q}</span>
-                <ChevronDown className={cn("size-5 shrink-0 text-ink-400 transition-transform", open === idx && "rotate-180")} />
+                <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full transition-all", isOpen ? "bg-brand-500 text-white" : "bg-ink-100 text-ink-500")}>
+                  <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
+                </span>
               </button>
-              {open === idx && <p className="border-t border-ink-100 px-5 py-4 text-sm leading-relaxed text-ink-500">{f.a}</p>}
+              {isOpen && <p className="border-t border-ink-100 px-5 py-4 text-sm leading-relaxed text-ink-500 sm:px-6">{f.a}</p>}
             </div>
           );
         })}
@@ -65,8 +79,8 @@ export function FAQ() {
 
       <p className="mt-8 text-center text-sm text-ink-500">
         Still have questions?{" "}
-        <span className="inline-flex items-center gap-1 font-semibold text-go-600">
-          <MessageCircle className="size-4" /> Chat with our AI assistant or WhatsApp +91 90000 90000
+        <span className="inline-flex items-center gap-1.5 font-semibold text-go-600">
+          <MessageCircle className="size-4" /> Chat with Sathi, our AI assistant, or WhatsApp +91 90000 90000
         </span>
       </p>
     </section>

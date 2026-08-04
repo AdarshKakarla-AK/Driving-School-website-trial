@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Clock, Send, CheckCircle2 } from "lucide-react";
-import { Button, Card, Input, Textarea } from "@/components/ui";
+import { MapPin, Phone, Clock, Send, CheckCircle2, MessageCircle } from "lucide-react";
+import { Button, Card, Input, Textarea, Eyebrow } from "@/components/ui";
 import { api, type ApiData } from "@/lib/client";
 
 export function Contact({ settings }: { settings: ApiData }) {
@@ -22,34 +22,41 @@ export function Contact({ settings }: { settings: ApiData }) {
   };
 
   return (
-    <section id="contact" className="bg-card border-t border-ink-100 py-20">
+    <section id="contact" className="border-t border-ink-100 bg-card py-20 scroll-mt-24 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-12 lg:grid-cols-2">
           <div>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">Contact Us</span>
-            <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">Book your free demo session today</h2>
-            <p className="mt-3 max-w-md text-ink-500">Leave your number and our team will call you within 24 hours. Prefer instant? WhatsApp us or chat with the AI assistant.</p>
+            <Eyebrow>Contact Us</Eyebrow>
+            <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
+              Book your free demo session today
+            </h2>
+            <p className="mt-3 max-w-md text-ink-500">
+              Leave your number and our team will call you within 24 hours. Prefer instant? WhatsApp us or chat with Sathi, our AI assistant.
+            </p>
 
             <div className="mt-8 space-y-4">
               {settings?.branches?.map((b: ApiData) => (
-                <div key={b.id} className="card-shadow flex items-start gap-4 rounded-2xl border border-ink-100 bg-card p-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                <div key={b.id} className="card-shadow group flex items-start gap-4 rounded-2xl border border-ink-100 bg-paper p-4 transition-all hover:border-brand-300">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 transition group-hover:bg-brand-500 group-hover:text-white dark:text-brand-400">
                     <MapPin className="size-5" />
                   </div>
                   <div>
                     <p className="font-semibold text-ink-900">{b.name}</p>
                     <p className="mt-0.5 text-sm text-ink-500">{b.address}</p>
-                    <p className="mt-1 text-sm font-medium text-brand-600 dark:text-brand-400">{b.phone}</p>
+                    <p className="mt-1 text-sm font-semibold text-brand-600 dark:text-brand-400">{b.phone}</p>
                   </div>
                 </div>
               ))}
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2 text-sm text-ink-500">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm text-ink-500">
+                <span className="inline-flex items-center gap-2">
                   <Phone className="size-4 text-brand-500" /> {settings?.phone}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-ink-500">
+                </span>
+                <span className="inline-flex items-center gap-2">
                   <Clock className="size-4 text-brand-500" /> {settings?.openingHours}
-                </div>
+                </span>
+                <a href={`https://wa.me/${(settings?.whatsapp ?? "").replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-semibold text-go-600 hover:underline">
+                  <MessageCircle className="size-4" /> WhatsApp us now
+                </a>
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-night-950 px-4 py-12">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-night-950 px-4 py-12">
         <div className="bg-grid-dark absolute inset-0" />
         <div className="absolute -top-24 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl" />
         <div className="absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />

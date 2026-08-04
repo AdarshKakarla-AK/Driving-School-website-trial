@@ -9,6 +9,29 @@ husky + commitlint).
 ## [Unreleased]
 
 ### Added
+- World-class UI/UX redesign (Tesla × Apple × Stripe × Airbnb aesthetic):
+  - Premium design system in `globals.css`: semantic light/dark tokens
+    (`ink-*`, `brand-*`, `trust-*`, `paper`, `card`, `night-*`, `go-*`,
+    `stop-*`, `warn-*`), Manrope display + Inter body typography, `text-gradient*`,
+    `bg-grid`, `glass`, `card-shadow`, `gradient-border`, `hairline`, focus
+    rings, and a full keyframe library (float, pulse-ring, shimmer, rise,
+    fade-in, marquee, confetti) with a `prefers-reduced-motion` guard.
+  - New homepage: dark hero with progress-card visual, social-proof marquee,
+    pricing with filters, fleet cards (EV/fuel/badge aware), instructors,
+    6-step journey, testimonials carousel, searchable FAQ, contact, final CTA,
+    and a mobile sticky CTA bar.
+  - New shared components: `PageHero`, `Eyebrow`, `Fleet`, `SocialProof`,
+    `StickyCTA`, `FinalCTA`, plus `Select`/`Textarea` in the `ui` kit.
+  - Redesigned sub-pages (courses, instructors, about, contact), dark 404
+    page, and polished auth shell with glowing brand backdrop.
+- `GET /api/public/site` now also returns `vehicles` for the fleet section.
+
+### Changed
+- Navbar rewritten (glass on scroll, mobile slide-down menu, role-aware
+  Dashboard/Logout), hero and every section rebuilt on the new design tokens.
+- Auth layout no longer overflows horizontally on mobile (blob clip).
+
+### Added
 - Razorpay gateway: real checkout via the shared `startRazorpayCheckout` modal in the
   booking flow and student portal, order creation + verification API routes
   (rate-limited and ownership-checked), and a signed `/api/payments/webhook`

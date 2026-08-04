@@ -72,7 +72,7 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="no-print fixed bottom-5 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-xl transition hover:scale-105"
+          className="no-print fixed bottom-24 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-xl transition hover:scale-105 lg:bottom-5"
           aria-label="Open AI assistant"
         >
           <Bot className="size-7" />
@@ -80,7 +80,7 @@ export function ChatWidget() {
       )}
 
       {open && (
-        <div className="no-print fixed bottom-5 right-5 z-50 flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-3xl bg-card shadow-2xl ring-1 ring-ink-100">
+        <div className="no-print fixed bottom-24 right-5 z-50 flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-3xl bg-card shadow-2xl ring-1 ring-ink-100 lg:bottom-5">
           <div className="flex items-center justify-between bg-night-900 px-4 py-3 text-white">
             <div className="flex items-center gap-3">
               <div className="relative flex size-9 items-center justify-center rounded-full bg-gradient-to-b from-brand-400 to-brand-600">

@@ -9,9 +9,10 @@ type Variant = "primary" | "dark" | "outline" | "ghost" | "danger" | "success" |
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-sm hover:from-brand-500 hover:to-brand-700 focus-visible:ring-brand-500",
+  primary:
+    "bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-[0_8px_20px_-10px_rgba(245,158,11,0.6)] hover:from-brand-500 hover:to-brand-700 hover:shadow-[0_12px_28px_-10px_rgba(245,158,11,0.7)] focus-visible:ring-brand-500",
   dark: "bg-night-900 text-white hover:bg-night-800 focus-visible:ring-night-800",
-  outline: "border border-ink-300 bg-card text-ink-800 hover:border-brand-400 hover:bg-ink-50 focus-visible:ring-ink-300",
+  outline: "border border-ink-300 bg-card text-ink-800 hover:border-brand-400 hover:bg-brand-50/40 hover:text-brand-700 focus-visible:ring-ink-300 dark:hover:bg-brand-500/10 dark:hover:text-brand-300",
   ghost: "text-ink-700 hover:bg-ink-100 focus-visible:ring-ink-300",
   danger: "bg-stop-500 text-white hover:bg-stop-500/90 focus-visible:ring-stop-500/50",
   success: "bg-go-600 text-white hover:bg-go-500 focus-visible:ring-go-500/50",
@@ -26,7 +27,7 @@ const sizes: Record<Size, string> = {
 
 export function buttonClasses(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
-    "inline-flex items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap",
+    "inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap",
     variants[variant],
     sizes[size],
     className
@@ -51,15 +52,24 @@ export function Button({
 
 export function Badge({ children, className, tone = "brand" }: { children: React.ReactNode; className?: string; tone?: "brand" | "green" | "red" | "ink" | "blue" | "amber" }) {
   const tones = {
-    brand: "bg-brand-500/15 text-brand-600 dark:text-brand-400",
-    green: "bg-go-500/15 text-go-600",
-    red: "bg-stop-500/15 text-stop-500",
-    ink: "bg-ink-100 text-ink-700",
-    blue: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-    amber: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    brand: "bg-brand-500/15 text-brand-700 ring-1 ring-brand-500/20 dark:text-brand-400",
+    green: "bg-go-500/15 text-go-600 ring-1 ring-go-500/20 dark:text-go-500",
+    red: "bg-stop-500/15 text-stop-500 ring-1 ring-stop-500/20",
+    ink: "bg-ink-100 text-ink-700 ring-1 ring-ink-200 dark:bg-ink-100/10 dark:text-ink-300 dark:ring-ink-100/20",
+    blue: "bg-trust-500/15 text-trust-700 ring-1 ring-trust-500/20 dark:text-trust-400",
+    amber: "bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/20 dark:text-amber-400",
   };
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[tone], className)}>
+      {children}
+    </span>
+  );
+}
+
+export function Eyebrow({ children, className, tone = "brand" }: { children: React.ReactNode; className?: string; tone?: "brand" | "trust" }) {
+  return (
+    <span className={cn("inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em]", tone === "trust" ? "text-trust-600 dark:text-trust-400" : "text-brand-600 dark:text-brand-400", className)}>
+      <span className={cn("size-1.5 rounded-full", tone === "trust" ? "bg-trust-500" : "bg-brand-500")} aria-hidden />
       {children}
     </span>
   );
@@ -90,11 +100,11 @@ export function Stat({ label, value, sub, icon }: { label: string; value: React.
 export function Input({ className, label, hint, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string; hint?: string }) {
   return (
     <label className="block">
-      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
+      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-300">{label}</span>}
       <input
         className={cn(
-          "h-10 w-full rounded-xl border border-ink-200 bg-card px-3 text-sm text-ink-900 placeholder:text-ink-400",
-          "focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 disabled:bg-ink-50",
+          "h-11 w-full rounded-xl border border-ink-200 bg-card px-3.5 text-sm text-ink-900 shadow-sm transition placeholder:text-ink-400",
+          "focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 disabled:bg-ink-50",
           className
         )}
         {...props}
@@ -107,10 +117,10 @@ export function Input({ className, label, hint, ...props }: React.InputHTMLAttri
 export function Select({ className, label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }) {
   return (
     <label className="block">
-      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
+      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-300">{label}</span>}
       <select
         className={cn(
-          "h-10 w-full rounded-xl border border-ink-200 bg-card px-3 text-sm text-ink-900 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15",
+          "h-11 w-full rounded-xl border border-ink-200 bg-card px-3.5 text-sm text-ink-900 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15",
           className
         )}
         {...props}
@@ -124,10 +134,10 @@ export function Select({ className, label, children, ...props }: React.SelectHTM
 export function Textarea({ className, label, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }) {
   return (
     <label className="block">
-      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>}
+      {label && <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-300">{label}</span>}
       <textarea
         className={cn(
-          "w-full rounded-xl border border-ink-200 bg-card px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15",
+          "w-full rounded-xl border border-ink-200 bg-card px-3.5 py-2.5 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15",
           className
         )}
         {...props}

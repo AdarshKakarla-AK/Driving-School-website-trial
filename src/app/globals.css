@@ -5,11 +5,13 @@
 /* ---- Theme tokens -------------------------------------------------------
    Semantic tokens flip between light and dark mode via CSS custom props.
    The `night` scale is constant (never flips) and is used only for
-   always-dark surfaces: hero, footer, dark buttons, modal backdrops.      */
+   always-dark surfaces: hero, footer, dark buttons, modal backdrops.
+   `trust` is a calm safety-blue used for verification, guarantees and
+   trust indicators. `brand` stays the warm amber energy accent.        */
 
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), system-ui, sans-serif;
 
   --color-ink-50: var(--ink-50);
   --color-ink-100: var(--ink-100);
@@ -33,6 +35,17 @@
   --color-brand-700: var(--brand-700);
   --color-brand-800: var(--brand-800);
 
+  --color-trust-50: var(--trust-50);
+  --color-trust-100: var(--trust-100);
+  --color-trust-200: var(--trust-200);
+  --color-trust-300: var(--trust-300);
+  --color-trust-400: var(--trust-400);
+  --color-trust-500: var(--trust-500);
+  --color-trust-600: var(--trust-600);
+  --color-trust-700: var(--trust-700);
+  --color-trust-800: var(--trust-800);
+  --color-trust-900: var(--trust-900);
+
   --color-paper: var(--paper);
   --color-card: var(--card);
 
@@ -46,6 +59,7 @@
   --color-warn-500: var(--warn-500);
 }
 
+/* ---- Light mode ---- */
 :root {
   --ink-50: #f6f8fb;
   --ink-100: #edf0f5;
@@ -59,7 +73,7 @@
   --ink-900: #101828;
   --ink-950: #0b1120;
 
-  --brand-50: #fffbeb;
+  --brand-50: #fffaeb;
   --brand-100: #fef3c7;
   --brand-200: #fde68a;
   --brand-300: #fcd34d;
@@ -69,12 +83,23 @@
   --brand-700: #b45309;
   --brand-800: #92400e;
 
-  --paper: #faf9f7;
+  --trust-50: #eff6ff;
+  --trust-100: #dbeafe;
+  --trust-200: #bfdbfe;
+  --trust-300: #93c5fd;
+  --trust-400: #60a5fa;
+  --trust-500: #3b82f6;
+  --trust-600: #2563eb;
+  --trust-700: #1d4ed8;
+  --trust-800: #1e40af;
+  --trust-900: #1e3a8a;
+
+  --paper: #fafafa;
   --card: #ffffff;
 
-  --night-950: #090e1a;
-  --night-900: #0d1424;
-  --night-800: #16213a;
+  --night-950: #060a14;
+  --night-900: #0a1120;
+  --night-800: #12203a;
 
   --go-500: #10b981;
   --go-600: #059669;
@@ -82,11 +107,12 @@
   --warn-500: #f59e0b;
 }
 
+/* ---- Dark mode (luxury midnight) ---- */
 .dark {
-  --ink-50: #0a0f1c;
-  --ink-100: #141c2f;
-  --ink-200: #1e2a42;
-  --ink-300: #4a5a78;
+  --ink-50: #0a0f1d;
+  --ink-100: #121a2e;
+  --ink-200: #1c2742;
+  --ink-300: #41516f;
   --ink-400: #8b99af;
   --ink-500: #a7b3c7;
   --ink-600: #bac5d8;
@@ -105,8 +131,22 @@
   --brand-700: #fcd34d;
   --brand-800: #fde68a;
 
-  --paper: #090e1a;
-  --card: #101829;
+  --trust-50: #0b1526;
+  --trust-100: #122140;
+  --trust-200: #1a2f5e;
+  --trust-300: #23417f;
+  --trust-400: #4c8dff;
+  --trust-500: #6ba1ff;
+  --trust-600: #8bb4ff;
+  --trust-700: #a9c6ff;
+  --trust-800: #cddfff;
+
+  --paper: #05070e;
+  --card: #0b1220;
+
+  --night-950: #04060d;
+  --night-900: #080d18;
+  --night-800: #0f1626;
 
   --go-500: #34d399;
   --go-600: #6ee7b7;
@@ -117,6 +157,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -139,7 +180,7 @@ body {
 
 /* ---- Premium gradients & surfaces ---- */
 .text-gradient {
-  background: linear-gradient(120deg, var(--brand-400) 0%, var(--brand-500) 55%, var(--brand-600) 105%);
+  background: linear-gradient(120deg, var(--brand-300) 0%, var(--brand-500) 55%, var(--brand-600) 105%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -152,21 +193,37 @@ body {
   color: transparent;
 }
 
+.text-gradient-trust {
+  background: linear-gradient(120deg, var(--trust-300) 0%, var(--trust-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .bg-grid {
   background-image: linear-gradient(to right, color-mix(in srgb, var(--ink-900) 5%, transparent) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in srgb, var(--ink-900) 5%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
 }
 
 .bg-grid-dark {
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 44px 44px;
+  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 20%, #000 30%, transparent 100%);
 }
 
 .glass {
   background: color-mix(in srgb, var(--card) 72%, transparent);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.glass-dark {
+  background: color-mix(in srgb, var(--night-800) 55%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
 }
 
 /* ---- Shadows (elevated) ---- */
@@ -178,12 +235,39 @@ body {
   box-shadow: 0 2px 6px rgba(16, 24, 40, 0.06), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
 }
 
+.shadow-glow {
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15), 0 12px 40px -12px rgba(245, 158, 11, 0.35);
+}
+
 .dark .card-shadow {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
 }
 
 .dark .card-shadow-lg {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 24px 48px -16px rgba(0, 0, 0, 0.65);
+}
+
+/* ---- Gradient border (premium featured surfaces) ---- */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, var(--brand-400), var(--trust-500) 45%, var(--brand-600) 90%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---- Hairline ring ---- */
+.hairline {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-900) 8%, transparent);
 }
 
 /* ---- Focus ring (accessible) ---- */
@@ -194,8 +278,8 @@ body {
 
 /* ---- Scrollbars ---- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -203,9 +287,21 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--ink-200);
   border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ink-300);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ---- Motion ---- */
@@ -214,7 +310,15 @@ body {
   50% { transform: translateY(-8px); }
 }
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
 }
 
 @keyframes pulse-ring {
@@ -247,6 +351,26 @@ body {
 }
 .animate-rise {
   animation: rise 0.45s ease-out both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+/* Trust marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 36s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
 
 @keyframes confetti-fall {

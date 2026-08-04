@@ -23,7 +23,7 @@ export async function GET() {
     lessonsCompleted: db.bookings.filter((b) => b.status === "completed").length,
     rating: db.reviews.length ? (db.reviews.reduce((a, r) => a + r.rating, 0) / db.reviews.length) : 5,
   };
-  return NextResponse.json({ packages, instructors, reviews, stats, settings: db.settings });
+  return NextResponse.json({ packages, instructors, reviews, stats, settings: db.settings, vehicles: db.vehicles });
 }
 
 export async function POST(req: Request) {

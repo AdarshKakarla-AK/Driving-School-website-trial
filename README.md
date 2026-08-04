@@ -6,7 +6,7 @@ A full-featured driving school management platform — public marketing site, st
 
 ## Features
 
-- **Public site** — courses & packages, instructors, testimonials, FAQ, chat widget, contact & lead capture, certificate verification.
+- **Public site** — premium marketing homepage (hero, social proof, pricing, fleet, instructors, process, testimonials, FAQ, contact, final CTA, mobile sticky CTA), courses & packages, instructors, about, certificate verification. Dark + light themes with a shared design token system (Manrope/Inter, semantic colors).
 - **Booking & scheduling** — 14-day rolling slot window (Sundays off), availability by instructor/vehicle type, bookings, reschedules, cancellations with policy-based fees, waitlist auto-notify.
 - **Payments** — Razorpay integration (signed webhook for `payment.captured` / `payment.failed`) with full & EMI plans, invoices with GST, coupons. Runs in **demo mode** (fake orders, instant verify) when Razorpay keys are absent; `npm run check:keys` verifies credentials before launch.
 - **Student portal** — dashboard, bookings, payments, lesson progress tracking, documents, certificates, reviews, notifications.

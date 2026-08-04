@@ -87,8 +87,10 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-                  active ? "bg-gradient-to-r from-brand-50 to-transparent text-brand-700" : "text-ink-500 hover:bg-ink-50 hover:text-ink-900"
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                  active
+                    ? "bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-[0_8px_20px_-10px_rgba(245,158,11,0.6)]"
+                    : "text-ink-500 hover:bg-ink-50 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-white/5 dark:hover:text-white"
                 )}
               >
                 <item.icon className="size-4.5" /> {item.label}
@@ -96,13 +98,17 @@ export function PortalShell({ children, initialRole }: { children: React.ReactNo
             );
           })}
         </nav>
-        <div className="border-t border-ink-100 p-3">
-          <Link href="/" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50">
+        <div className="space-y-1 border-t border-ink-100 p-3">
+          <Link href="/" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:text-ink-300 dark:hover:bg-white/5">
             <Building2 className="size-4.5" /> Public site
           </Link>
-          <Link href="/book" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50">
+          <Link href="/book" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50 dark:text-ink-300 dark:hover:bg-white/5">
             <CalendarDays className="size-4.5" /> Book a lesson
           </Link>
+          <div className="mt-2 rounded-xl bg-ink-50/70 p-3 dark:bg-white/5">
+            <p className="truncate text-sm font-bold text-ink-900 dark:text-ink-100">{user?.name ?? "Guest"}</p>
+            <p className="text-[11px] uppercase tracking-wide text-ink-400">{role} account</p>
+          </div>
         </div>
       </aside>
       {open && <div className="no-print fixed inset-0 z-30 bg-night-950/60 lg:hidden" onClick={() => setOpen(false)} />}
