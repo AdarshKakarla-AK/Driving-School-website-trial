@@ -12,6 +12,7 @@ import { Process } from "@/components/site/Process";
 import { FAQ } from "@/components/site/FAQ";
 import { Contact } from "@/components/site/Contact";
 import { FinalCTA } from "@/components/site/FinalCTA";
+import { JsonLd } from "@/components/site/JsonLd";
 import { Skeleton } from "@/components/ui";
 
 export default function Home() {
@@ -24,7 +25,7 @@ export default function Home() {
   return (
     <>
       <Hero stats={data?.stats} />
-      <SocialProof />
+      <SocialProof stats={data?.stats} />
       {!data ? (
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-xl space-y-3 text-center">
@@ -40,7 +41,8 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <Packages packages={data.packages} />
+          <JsonLd settings={data?.settings} instructors={data?.instructors} vehicles={data?.vehicles} />
+          <Packages packages={data.packages} seats={data?.seats} />
           <Fleet vehicles={data.vehicles} />
           <Instructors instructors={data.instructors} />
           <Process />

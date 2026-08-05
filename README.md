@@ -6,12 +6,12 @@ A full-featured driving school management platform — public marketing site, st
 
 ## Features
 
-- **Public site** — premium marketing homepage (hero, social proof, pricing, fleet, instructors, process, testimonials, FAQ, contact, final CTA, mobile sticky CTA), courses & packages, instructors, about, certificate verification. Dark + light themes with a shared design token system (Manrope/Inter, semantic colors).
+- **Public site** — premium marketing homepage (hero, social proof, pricing with live-seat urgency, fleet, instructors, process, testimonials, FAQ, contact, final CTA, mobile sticky CTA), courses & packages with a side-by-side comparison table, instructors, about, contact with Google Maps embed, certificate verification. Real photography, JSON-LD structured data, and **multilingual EN / ಕನ್ನಡ / हिन्दी** with a language switcher next to the theme toggle. Dark + light themes with a shared design token system (Manrope/Inter, semantic colors).
 - **Booking & scheduling** — 14-day rolling slot window (Sundays off), availability by instructor/vehicle type, bookings, reschedules, cancellations with policy-based fees, waitlist auto-notify.
 - **Payments** — Razorpay integration (signed webhook for `payment.captured` / `payment.failed`) with full & EMI plans, invoices with GST, coupons. Runs in **demo mode** (fake orders, instant verify) when Razorpay keys are absent; `npm run check:keys` verifies credentials before launch.
 - **Student portal** — dashboard, bookings, payments, lesson progress tracking, documents, certificates, reviews, notifications.
 - **Admin portal** — overview & analytics, CRM (students & leads), bookings, finance (expenses, payroll), coupons, vehicles, automation & broadcast, settings.
-- **Automation & notifications** — in-app inbox + optional WhatsApp/email webhooks (fire-and-forget, never block requests). See `DEPLOYMENT.md` for the webhook contract.
+- **Automation & notifications** — in-app inbox + optional WhatsApp/email webhooks (fire-and-forget, never block requests), scheduled reminders (payments, lessons, document expiry, birthdays) and post-completion review follow-ups. See `DEPLOYMENT.md` for the webhook contract.
 - **SQLite persistence** — per-collection JSON storage with WAL mode, transaction-safe writes, automatic schema migrations & collection backfill, legacy `db.json` auto-import, and a backup/restore toolchain.
 
 ## Tech stack

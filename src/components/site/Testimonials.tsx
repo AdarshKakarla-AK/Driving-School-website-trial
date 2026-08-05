@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Quote, ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import { Card, Stars, Eyebrow } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import type { Review } from "@/lib/db/types";
 
 export function Testimonials({ reviews }: { reviews: (Review & { student: string })[] }) {
   const [idx, setIdx] = useState(0);
+  const { t } = useI18n();
   if (!reviews.length) return null;
   const safeIdx = idx % reviews.length;
   const current = reviews[safeIdx];
@@ -20,10 +22,10 @@ export function Testimonials({ reviews }: { reviews: (Review & { student: string
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <Eyebrow className="justify-center">Student Stories</Eyebrow>
-          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">Real results from real students</h2>
+          <Eyebrow className="justify-center">{t("testimonials.eyebrow")}</Eyebrow>
+          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">{t("testimonials.title")}</h2>
           <p className="mt-3 text-ink-500">
-            Rated <span className="font-bold text-ink-900">{avg} / 5</span> across {reviews.length} verified reviews on Google.
+            {t("testimonials.ratingLine", { avg, count: reviews.length })}
           </p>
         </div>
 
@@ -45,7 +47,7 @@ export function Testimonials({ reviews }: { reviews: (Review & { student: string
                 </div>
               </div>
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-go-500/10 px-3 py-1.5 text-xs font-semibold text-go-600 ring-1 ring-go-500/20">
-                <BadgeCheck className="size-3.5" /> Verified Student
+                <BadgeCheck className="size-3.5" /> {t("testimonials.verifiedStudent")}
               </span>
             </div>
           </Card>

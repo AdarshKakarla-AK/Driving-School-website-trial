@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https:",
-              "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com",
+              "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.google.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",

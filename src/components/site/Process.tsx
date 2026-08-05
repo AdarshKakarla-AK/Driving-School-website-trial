@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { CalendarCheck, UserCheck, CreditCard, CarFront, MessageSquareText, Award, ArrowRight } from "lucide-react";
 import { buttonClasses, Eyebrow } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 const STEPS = [
-  { icon: UserCheck, title: "Register online", desc: "OTP-verified account with your Student ID in seconds — no paperwork." },
-  { icon: CalendarCheck, title: "Pick a slot live", desc: "See real-time instructor availability and book instantly, 24/7." },
-  { icon: CreditCard, title: "Pay securely", desc: "UPI, cards or EMI via Razorpay. Instant GST invoice + receipt." },
-  { icon: CarFront, title: "Get assigned", desc: "Instructor & car auto-assigned. Confirmations via WhatsApp + Email." },
-  { icon: MessageSquareText, title: "Learn & track", desc: "Attendance, notes and skill ratings update after every lesson." },
-  { icon: Award, title: "Earn your license", desc: "License checklist, mock tests and a verified certificate on completion." },
+  { icon: UserCheck, tKey: "process.s1t", dKey: "process.s1d" },
+  { icon: CalendarCheck, tKey: "process.s2t", dKey: "process.s2d" },
+  { icon: CreditCard, tKey: "process.s3t", dKey: "process.s3d" },
+  { icon: CarFront, tKey: "process.s4t", dKey: "process.s4d" },
+  { icon: MessageSquareText, tKey: "process.s5t", dKey: "process.s5d" },
+  { icon: Award, tKey: "process.s6t", dKey: "process.s6d" },
 ];
 
 export function Process() {
+  const { t } = useI18n();
   return (
     <section className="relative overflow-hidden bg-night-950 py-20 text-white sm:py-24">
       <div className="bg-grid-dark absolute inset-0" />
@@ -22,15 +24,15 @@ export function Process() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <Eyebrow className="justify-center">How It Works</Eyebrow>
-          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight sm:text-4xl">From signup to license — fully automated</h2>
-          <p className="mt-3 text-white/50">A premium, app-like experience. No calls, no queues, no confusion.</p>
+          <Eyebrow className="justify-center">{t("process.eyebrow")}</Eyebrow>
+          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{t("process.title")}</h2>
+          <p className="mt-3 text-white/50">{t("process.subtitle")}</p>
         </div>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {STEPS.map((s, i) => (
             <div
-              key={s.title}
+              key={s.tKey}
               className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:bg-white/[0.07]"
             >
               <span className="font-display pointer-events-none absolute -right-2 -top-5 text-7xl font-extrabold text-white/[0.06] transition-colors group-hover:text-brand-400/10">
@@ -39,8 +41,8 @@ export function Process() {
               <div className="relative flex size-12 items-center justify-center rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 shadow-lg transition-transform duration-300 group-hover:scale-105">
                 <s.icon className="size-6" />
               </div>
-              <h3 className="font-display relative mt-5 text-lg font-bold">{s.title}</h3>
-              <p className="relative mt-2 text-sm leading-relaxed text-white/50">{s.desc}</p>
+              <h3 className="font-display relative mt-5 text-lg font-bold">{t(s.tKey)}</h3>
+              <p className="relative mt-2 text-sm leading-relaxed text-white/50">{t(s.dKey)}</p>
               {i < STEPS.length - 1 && (
                 <ArrowRight className="absolute -right-2 top-1/2 hidden size-5 -translate-y-1/2 text-white/15 lg:block lg:right-0 xl:right-2" aria-hidden />
               )}
@@ -50,10 +52,10 @@ export function Process() {
 
         <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/register" className={buttonClasses("primary", "lg", "shadow-glow")}>
-            Create Your Student Account — Free
+            {t("process.createAccount")}
           </Link>
           <Link href="/courses" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 text-base font-semibold text-white transition-all hover:border-white/30 hover:bg-white/10 active:scale-[0.98]">
-            Compare Packages
+            {t("process.comparePackages")}
           </Link>
         </div>
       </div>

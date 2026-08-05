@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, Phone, MessageCircle } from "lucide-react";
 import { buttonClasses } from "@/components/ui";
+import { PHONE_TEL, waLink } from "@/lib/contact";
+import { useI18n } from "@/lib/i18n";
 
 export function FinalCTA() {
+  const { t } = useI18n();
   return (
     <section className="mx-auto max-w-7xl px-4 pb-24 pt-4 sm:px-6">
       <div className="gradient-border relative overflow-hidden rounded-[2rem] bg-night-950 px-6 py-16 text-center sm:px-12 sm:py-20">
@@ -14,33 +17,33 @@ export function FinalCTA() {
 
         <div className="relative mx-auto max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-500/10 px-4 py-1.5 text-xs font-semibold text-brand-300">
-            <CalendarCheck className="size-4" /> Free demo lessons available this week
+            <CalendarCheck className="size-4" /> {t("finalCta.badge")}
           </span>
           <h2 className="font-display mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Your license is closer than you think.
+            {t("finalCta.title")}
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-lg text-white/55">
-            Book a free demo, feel the car, meet your instructor — then decide. No commitment, no pressure.
+            {t("finalCta.subtitle")}
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/book" className={buttonClasses("primary", "lg", "w-full sm:w-auto shadow-glow")}>
-              Book a Free Demo <ArrowRight className="size-4" />
+              {t("common.bookFreeDemo")} <ArrowRight className="size-4" />
             </Link>
-            <a href="tel:+9190000090000" className={buttonClasses("white", "lg", "w-full sm:w-auto")}>
-              <Phone className="size-4" /> Call Us
+            <a href={PHONE_TEL} className={buttonClasses("white", "lg", "w-full sm:w-auto")}>
+              <Phone className="size-4" /> {t("common.callUs")}
             </a>
             <a
-              href="https://wa.me/919000090000"
+              href={waLink()}
               target="_blank"
               rel="noreferrer"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-go-600 px-6 text-base font-semibold text-white shadow-[0_8px_20px_-10px_rgba(16,185,129,0.7)] transition-all hover:bg-go-500 active:scale-[0.98] sm:w-auto"
             >
-              <MessageCircle className="size-4" /> WhatsApp
+              <MessageCircle className="size-4" /> {t("common.whatsapp")}
             </a>
           </div>
 
-          <p className="mt-6 text-xs text-white/40">Free reschedule up to 24h before · 100% money-back on unused lessons</p>
+          <p className="mt-6 text-xs text-white/40">{t("finalCta.fineprint")}</p>
         </div>
       </div>
     </section>

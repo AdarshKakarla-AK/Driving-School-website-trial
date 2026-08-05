@@ -20,6 +20,7 @@ function RegisterInner() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const [packages, setPackages] = React.useState<ApiData[]>([]);
+  const [seats, setSeats] = React.useState<{ vehicleType: string; free: number }[]>([]);
 
   const [form, setForm] = React.useState({
     name: "",
@@ -42,6 +43,7 @@ function RegisterInner() {
       setPackages(d.packages);
       if (d.packages[0]) setForm((f) => ({ ...f, packageId: d.packages[0].id, vehiclePreference: d.packages[0].vehicleType === "both" ? "automatic" : d.packages[0].vehicleType }));
     });
+    api("/api/public/site").then((d: ApiData) => setSeats(d.seats ?? [])).catch(() => {});
   }, []);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -108,6 +110,20 @@ function RegisterInner() {
             </option>
           ))}
         </Select>
+        {(() => {
+          const pkg = packages.find((p) => p.id === form.packageId);
+          const seat = seats.find((s) => s.vehicleType === pkg?.vehicleType) ?? seats.find((s) => s.vehicleType === "both");
+          if (!seat || seat.free <= 0) return null;
+          return (
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-500">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-go-500 opacity-60" />
+                <span className="relative inline-flex size-2 rounded-full bg-go-500" />
+              </span>
+              Live: {seat.free} free {pkg?.vehicleType === "manual" ? "manual " : pkg?.vehicleType === "automatic" ? "automatic " : ""}slots in the next 7 days
+            </p>
+          );
+        })()}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Select label="Vehicle preference" value={form.vehiclePreference} onChange={(e) => set("vehiclePreference", e.target.value)}>

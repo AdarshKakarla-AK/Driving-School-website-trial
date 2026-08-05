@@ -281,8 +281,10 @@ export function buildSeed(): DB {
     // certificates + reviews for finished students
     if (s.completedCount >= pkg.sessions || s.id === "usr_s8") {
       certificates.push({ id: uid("cert"), studentId: s.id, packageId: s.pkg, code: `SMCERT-${Math.random().toString(36).slice(2, 10).toUpperCase()}`, issuedAt: tsAgo(20), signedBy: "Suresh Mathru (Director)" });
-      const rating = si % 4 === 0 ? 5 : si % 4 === 1 ? 5 : si % 4 === 2 ? 4 : 5;
-      reviews.push({ id: uid("rev"), studentId: s.id, rating, comment: testiComments[si % testiComments.length], createdAt: tsAgo(15) });
+      if (s.id !== "usr_s8") {
+        const rating = si % 4 === 0 ? 5 : si % 4 === 1 ? 5 : si % 4 === 2 ? 4 : 5;
+        reviews.push({ id: uid("rev"), studentId: s.id, rating, comment: testiComments[si % testiComments.length], createdAt: tsAgo(15) });
+      }
     }
   });
 

@@ -1,5 +1,5 @@
 import "server-only";
-import { nowISO, today } from "./db/store";
+import { nowISO, today, uid } from "./db/store";
 import { notify } from "./notify";
 import { paymentRemindersDue } from "./payments";
 import { weeklyReport, weeklySummaryText } from "./weekly";
@@ -11,6 +11,7 @@ export interface AutomationRunSummary {
   licenseReminders: number;
   birthdays: number;
   weeklyDigest: number;
+  completionFollowUps: number;
 }
 
 const DAY_MS = 86400000;
@@ -121,6 +122,24 @@ export function runWeeklyDigest(db: DB, now: number = Date.now()): number {
   return sent;
 }
 
+export function runCompletionFollowUps(db: DB, daysAfter = 3, now: number = Date.now()): number {
+  let sent = 0;
+  const cutoff = now - daysAfter * DAY_MS;
+  for (const cert of db.certificates) {
+    if (Date.parse(cert.issuedAt) > cutoff) continue;
+    const student = activeStudent(db, cert.studentId);
+    if (!student) continue;
+    if (db.reviews.some((r) => r.studentId === cert.studentId)) continue;
+    if (db.automationLogs.some((l) => l.type === "feedback_request" && l.summary.includes(cert.studentId))) continue;
+    notify(db, student, "feedback_request", "How was your experience? ⭐",
+      `Congrats on completing your course! Your certificate ${cert.code} was issued. We'd love your feedback — 5 stars? A quick Google review helps small businesses like ours a lot!`,
+      { channels: ["app", "whatsapp"], meta: "/portal/dashboard?tab=reviews" });
+    db.automationLogs.push({ id: uid("auto"), type: "feedback_request", channel: "whatsapp", recipient: student.phone, summary: `Review request for ${student.name} (${cert.studentId}) after certificate ${cert.code}`, status: "simulated", createdAt: nowISO() });
+    sent += 1;
+  }
+  return sent;
+}
+
 export function runDueAutomations(db: DB, now: number = Date.now()): AutomationRunSummary {
   return {
     paymentReminders: runPaymentReminders(db),
@@ -128,5 +147,6 @@ export function runDueAutomations(db: DB, now: number = Date.now()): AutomationR
     licenseReminders: runLicenseReminders(db),
     birthdays: runBirthdayReminders(db),
     weeklyDigest: runWeeklyDigest(db, now),
+    completionFollowUps: runCompletionFollowUps(db, 3, now),
   };
 }

@@ -4,11 +4,15 @@ import { useState } from "react";
 import { MapPin, Phone, Clock, Send, CheckCircle2, MessageCircle } from "lucide-react";
 import { Button, Card, Input, Textarea, Eyebrow } from "@/components/ui";
 import { api, type ApiData } from "@/lib/client";
+import { waLink } from "@/lib/contact";
+import { useI18n } from "@/lib/i18n";
+import { MapEmbed } from "@/components/site/MapEmbed";
 
 export function Contact({ settings }: { settings: ApiData }) {
   const [form, setForm] = useState({ name: "", phone: "", email: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const { t } = useI18n();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +30,12 @@ export function Contact({ settings }: { settings: ApiData }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-2">
           <div>
-            <Eyebrow>Contact Us</Eyebrow>
+            <Eyebrow>{t("contact.eyebrow")}</Eyebrow>
             <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
-              Book your free demo session today
+              {t("contact.title")}
             </h2>
             <p className="mt-3 max-w-md text-ink-500">
-              Leave your number and our team will call you within 24 hours. Prefer instant? WhatsApp us or chat with Sathi, our AI assistant.
+              {t("contact.subtitle")}
             </p>
 
             <div className="mt-8 space-y-4">
@@ -44,6 +48,14 @@ export function Contact({ settings }: { settings: ApiData }) {
                     <p className="font-semibold text-ink-900">{b.name}</p>
                     <p className="mt-0.5 text-sm text-ink-500">{b.address}</p>
                     <p className="mt-1 text-sm font-semibold text-brand-600 dark:text-brand-400">{b.phone}</p>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${b.address}, Bengaluru`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-trust-600 hover:underline dark:text-trust-400"
+                    >
+                      <MapPin className="size-3.5" /> {t("contact.getDirections")}
+                    </a>
                   </div>
                 </div>
               ))}
@@ -54,10 +66,14 @@ export function Contact({ settings }: { settings: ApiData }) {
                 <span className="inline-flex items-center gap-2">
                   <Clock className="size-4 text-brand-500" /> {settings?.openingHours}
                 </span>
-                <a href={`https://wa.me/${(settings?.whatsapp ?? "").replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-semibold text-go-600 hover:underline">
-                  <MessageCircle className="size-4" /> WhatsApp us now
+                <a href={waLink("Hi! I'd like a callback about learning to drive.")} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-semibold text-go-600 hover:underline">
+                  <MessageCircle className="size-4" /> {t("contact.whatsappUs")}
                 </a>
               </div>
+            </div>
+
+            <div className="mt-8">
+              <MapEmbed query="Sri Mathru Driving School, Banashankari, Bengaluru" />
             </div>
           </div>
 
@@ -67,23 +83,23 @@ export function Contact({ settings }: { settings: ApiData }) {
                 <div className="flex size-14 items-center justify-center rounded-full bg-go-500/15 text-go-600">
                   <CheckCircle2 className="size-8" />
                 </div>
-                <h3 className="font-display mt-4 text-xl font-bold text-ink-900">Request received!</h3>
-                <p className="mt-2 max-w-xs text-sm text-ink-500">We&apos;ve logged your enquiry and our team will call you within 24 hours. Meanwhile, explore our courses.</p>
+                <h3 className="font-display mt-4 text-xl font-bold text-ink-900">{t("contact.sentTitle")}</h3>
+                <p className="mt-2 max-w-xs text-sm text-ink-500">{t("contact.sentBody")}</p>
                 <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
-                  Send another request
+                  {t("contact.sendAnother")}
                 </Button>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-4">
-                <h3 className="font-display text-lg font-bold text-ink-900">Request a callback</h3>
-                <Input label="Full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Rahul Sharma" />
-                <Input label="Mobile number" required type="tel" pattern="[0-9]{10}" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="10-digit mobile number" />
-                <Input label="Email (optional)" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" />
-                <Textarea label="What would you like to learn?" rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="I'm a beginner and want automatic car training..." />
+                <h3 className="font-display text-lg font-bold text-ink-900">{t("contact.requestCallback")}</h3>
+                <Input label={t("contact.fullName")} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("contact.phName")} />
+                <Input label={t("contact.mobile")} required type="tel" pattern="[0-9]{10}" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={t("contact.phPhone")} />
+                <Input label={t("contact.emailOpt")} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("contact.phEmail")} />
+                <Textarea label={t("contact.learnWhat")} rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t("contact.phMsg")} />
                 <Button type="submit" loading={loading} className="w-full" size="lg">
-                  {!loading && <Send className="size-4" />} Request Callback
+                  {!loading && <Send className="size-4" />} {t("contact.requestCallbackBtn")}
                 </Button>
-                <p className="text-center text-xs text-ink-400">Your enquiry enters our CRM instantly — we never miss a lead.</p>
+                <p className="text-center text-xs text-ink-400">{t("contact.crmNote")}</p>
               </form>
             )}
           </Card>

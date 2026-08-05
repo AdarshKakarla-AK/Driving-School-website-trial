@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDB, mutate, uid, nowISO } from "@/lib/db/store";
+import { getAvailability } from "@/lib/booking";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,16 @@ export async function GET() {
     instructors: db.users.filter((u) => u.role === "instructor").length,
     lessonsCompleted: db.bookings.filter((b) => b.status === "completed").length,
     rating: db.reviews.length ? (db.reviews.reduce((a, r) => a + r.rating, 0) / db.reviews.length) : 5,
+    certificates: db.certificates.length,
   };
-  return NextResponse.json({ packages, instructors, reviews, stats, settings: db.settings, vehicles: db.vehicles });
+  const freeIn = (vehicleType: string) => getAvailability(db, undefined, vehicleType, 7).flatMap((d) => d.slots.filter((s) => s.status === "available")).length;
+  const seats = [
+    { vehicleType: "automatic", free: freeIn("automatic") },
+    { vehicleType: "manual", free: freeIn("manual") },
+    { vehicleType: "both", free: freeIn("both") },
+  ];
+  const weekFree = freeIn("both");
+  return NextResponse.json({ packages, instructors, reviews, stats, settings: db.settings, vehicles: db.vehicles, seats, weekFree });
 }
 
 export async function POST(req: Request) {

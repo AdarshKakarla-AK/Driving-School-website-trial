@@ -82,6 +82,43 @@ husky + commitlint).
   pending-payment booking it was paying for and reopens the slot, so abandoned
   checkouts stop holding slots hostage. Non-pending payments are left untouched.
 
+### Added
+- Real photography on the public site: five licensed stock photos
+  (`public/images/`) wired into the hero visual, fleet cards, instructor cards,
+  and the about-page team band via `next/image`.
+- Google Maps embed: `MapEmbed` component with a lazy iframe + "Get Directions"
+  pill on the home contact section and the contact page; CSP `frame-src` updated
+  to allow `https://www.google.com`.
+- Centralized contact helpers (`src/lib/contact.ts`): canonical
+  `WA_NUMBER=919000090000` / `PHONE_TEL`, `waLink()`, replacing every hardcoded
+  (and one broken 13-digit) WhatsApp number across CTAs, footer, FAQ, chat and
+  the courses page.
+- Live-seat urgency: `/api/public/site` now returns `seats` (7-day free-slot
+  counts per vehicle type) + `stats.certificates`; pricing cards show a pulsing
+  "Live" badge with slots-left pills, and the register page shows a live
+  availability hint.
+- Compare-packages table on the courses page (sessions/duration/vehicle/price/
+  inclusions/book per course) plus a fleet deep-link band.
+- Post-completion automation: `runCompletionFollowUps` nags students with
+  certificates ≥3 days old who haven't left a review (WhatsApp/app, audit-log
+  deduped); seed data now includes `usr_s8` as a certificate-without-review
+  target.
+- Structured data: `JsonLd` component emitting `LocalBusiness` + per-vehicle
+  `Vehicle` + per-instructor `Person` arrays on the homepage.
+- Real-time stats wired into `SocialProof` and the about-page stat cards.
+- Multilingual support (EN / ಕನ್ನಡ / हिन्दी): `LocaleProvider` + `useI18n`
+  (`src/lib/i18n.tsx`) with a localStorage-persisted locale, a
+  `LanguageToggle` next to the theme toggle in the navbar and auth layout, and
+  translated nav, hero, social proof, process, packages, comparison table,
+  footer, FAQ, CTAs, instructors, testimonials, contact forms, chat widget and
+  the about/contact pages (`<html lang>` updated on switch).
+
+### Changed
+- Portal polish: verified every portal component uses the new design tokens
+  (remaining `text-white` matches are legitimate colored buttons/gradients).
+- Chat widget panel resized to `h-[70vh] min-h-[380px] max-h-[600px]` to stay
+  within small phones.
+
 ## [0.1.0] — 2026-07-29
 
 ### Added

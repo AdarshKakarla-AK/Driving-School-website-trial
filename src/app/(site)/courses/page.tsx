@@ -6,8 +6,10 @@ import { Check, Clock, CalendarDays, CreditCard, Users, CarFront, ArrowRight } f
 import { Badge, buttonClasses, Spinner } from "@/components/ui";
 import { PageHero } from "@/components/site/PageHero";
 import { FinalCTA } from "@/components/site/FinalCTA";
+import { ComparePackages } from "@/components/site/ComparePackages";
 import { api, type ApiData } from "@/lib/client";
 import { formatINR } from "@/lib/utils";
+import { waLink } from "@/lib/contact";
 import type { CoursePackage } from "@/lib/db/types";
 
 export default function CoursesPage() {
@@ -49,7 +51,7 @@ export default function CoursesPage() {
                   <div className="mt-5 grid max-w-lg grid-cols-2 gap-3 sm:grid-cols-4">
                     <InfoChip icon={<Clock className="size-4" />} label="Duration" value={`${p.durationWeeks} weeks`} />
                     <InfoChip icon={<CalendarDays className="size-4" />} label="Sessions" value={`${p.sessions} lessons`} />
-                    <InfoChip icon={<CarFront className="size-4" />} label="Vehicle" value={p.vehicleType === "both" ? "Any" : p.vehicleType} />
+                    <InfoChip icon={<CarFront className="size-4" />} label="Vehicle" value={p.vehicleType === "both" ? "Any" : p.vehicleType} href="/#fleet" />
                     <InfoChip icon={<Users className="size-4" />} label="Ratio" value="1:1 training" />
                   </div>
 
@@ -106,7 +108,7 @@ export default function CoursesPage() {
                       Book This Course <ArrowRight className="size-4" />
                     </Link>
                     <a
-                      href={`https://wa.me/919000090000?text=${encodeURIComponent(`Hi! I'm interested in the ${p.name} (${formatINR(p.price)}). Please share details.`)}`}
+                      href={waLink(`Hi! I'm interested in the ${p.name} (${formatINR(p.price)}). Please share details.`)}
                       target="_blank"
                       rel="noreferrer"
                       className={buttonClasses("outline", "lg", "w-full")}
@@ -121,17 +123,39 @@ export default function CoursesPage() {
         </div>
       </div>
 
+      <ComparePackages packages={data.packages} />
+
+      <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
+        <div className="card-shadow flex flex-col items-center justify-between gap-4 rounded-3xl border border-ink-100 bg-gradient-to-r from-brand-500/10 to-trust-500/10 px-6 py-6 sm:flex-row sm:px-8">
+          <p className="text-center font-display text-lg font-bold text-ink-900 sm:text-left">
+            Want to see the exact cars you&apos;ll learn on?
+          </p>
+          <Link href="/#fleet" className={buttonClasses("dark", "md")}>
+            View the fleet <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      </div>
+
       <FinalCTA />
     </>
   );
 }
 
-function InfoChip({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-ink-100 bg-ink-50/60 p-3 dark:bg-ink-100/10">
+function InfoChip({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
+  const inner = (
+    <>
       <div className="flex items-center gap-1.5 text-brand-600 dark:text-brand-400">{icon}</div>
       <p className="mt-1.5 text-[11px] font-medium uppercase tracking-wide text-ink-400">{label}</p>
       <p className="text-sm font-semibold text-ink-800 dark:text-ink-100">{value}</p>
-    </div>
+    </>
   );
+  const cls = "rounded-xl border border-ink-100 bg-ink-50/60 p-3 transition hover:border-brand-300 hover:bg-brand-50/60 dark:bg-ink-100/10 dark:hover:bg-brand-500/10";
+  if (href) {
+    return (
+      <Link href={href} className={`block ${cls}`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls}>{inner}</div>;
 }

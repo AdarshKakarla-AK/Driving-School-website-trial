@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { CarFront, Gauge, Zap, Settings2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Badge, buttonClasses, Eyebrow } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ export function Fleet({ vehicles }: { vehicles: Vehicle[] }) {
   const manual = fleet.filter((v) => v.type === "manual").length;
   const automatic = fleet.filter((v) => v.type === "automatic").length;
   const ev = fleet.filter(isEV).length;
+  const images = ["/images/car-road.jpg", "/images/hero-car.jpg", "/images/steering.jpg"];
 
   return (
     <section id="fleet" className="border-y border-ink-100 bg-card py-20 sm:py-24">
@@ -51,17 +53,14 @@ export function Fleet({ vehicles }: { vehicles: Vehicle[] }) {
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {fleet.map((v) => (
+          {fleet.map((v, i) => (
             <div
               key={v.id}
               className="group card-shadow relative flex flex-col overflow-hidden rounded-3xl border border-ink-100 bg-paper transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
             >
-              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-ink-800 via-ink-900 to-night-950">
-                <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_20%_90%,rgba(16,185,129,0.5)_0,transparent_50%),radial-gradient(circle_at_85%_15%,rgba(245,158,11,0.6)_0,transparent_45%)]" />
-                <div className="absolute inset-0 bg-grid-dark" />
-                <div className="relative flex size-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
-                  <CarFront className="size-10 text-brand-400" />
-                </div>
+              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-night-950">
+                <Image src={images[i % images.length]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-night-950/60 to-transparent" />
                 <span
                   className={cn(
                     "absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1",

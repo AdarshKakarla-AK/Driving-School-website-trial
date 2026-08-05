@@ -1,25 +1,40 @@
 "use client";
 
+import * as React from "react";
 import { ShieldCheck, Star, TrendingUp, Users, CalendarCheck, CarFront, MessageCircle, CreditCard } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 const ITEMS = [
-  { icon: ShieldCheck, label: "RTO Certified" },
-  { icon: Star, label: "4.9★ Google Rating" },
-  { icon: TrendingUp, label: "98% First-Time Pass" },
-  { icon: Users, label: "1200+ Students" },
-  { icon: CalendarCheck, label: "8500+ Lessons" },
-  { icon: CarFront, label: "Dual-Control Fleet" },
-  { icon: MessageCircle, label: "24/7 WhatsApp Support" },
-  { icon: CreditCard, label: "Secure Razorpay Payments" },
+  { icon: ShieldCheck, key: "socialProof.rto" },
+  { icon: Star, key: "socialProof.rating" },
+  { icon: TrendingUp, key: "socialProof.pass" },
+  { icon: Users, key: "socialProof.students" },
+  { icon: CalendarCheck, key: "socialProof.lessons" },
+  { icon: CarFront, key: "socialProof.fleet" },
+  { icon: MessageCircle, key: "socialProof.whatsapp" },
+  { icon: CreditCard, key: "socialProof.payments" },
 ];
 
-export function SocialProof() {
+export function SocialProof({ stats }: { stats?: { students?: number; lessonsCompleted?: number; rating?: number } }) {
+  const { t } = useI18n();
+  const labelFor = (item: { icon: React.ComponentType<{ className?: string }>; key: string }): string => {
+    switch (item.key) {
+      case "socialProof.students":
+        return `${(stats?.students ?? 1200).toLocaleString("en-IN")}+ ${t("socialProof.students")}`;
+      case "socialProof.lessons":
+        return `${(stats?.lessonsCompleted ?? 8500).toLocaleString("en-IN")}+ ${t("socialProof.lessons")}`;
+      case "socialProof.rating":
+        return `${stats?.rating ?? 4.9}★ ${t("socialProof.googleRating")}`;
+      default:
+        return t(item.key);
+    }
+  };
   const row = [...ITEMS, ...ITEMS];
   return (
     <section className="border-b border-ink-100 bg-card py-8" aria-label="Trust and certifications">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <p className="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-ink-400">
-          Trusted by Bengaluru drivers — every day
+          {t("socialProof.headline")}
         </p>
         <div className="relative mt-5 overflow-hidden">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-card to-transparent" aria-hidden />
@@ -28,7 +43,7 @@ export function SocialProof() {
             {row.map((item, i) => (
               <span key={i} className="flex items-center gap-2.5 whitespace-nowrap text-sm font-semibold text-ink-500 dark:text-ink-300">
                 <item.icon className="size-4.5 text-brand-500" />
-                {item.label}
+                {labelFor(item)}
               </span>
             ))}
           </div>

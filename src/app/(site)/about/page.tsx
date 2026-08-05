@@ -1,14 +1,17 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { Award, CalendarCheck2, Car, HeartHandshake, MapPin, ShieldCheck, Sparkles, Users, Zap } from "lucide-react";
 import { Spinner, Stars, Eyebrow } from "@/components/ui";
 import { PageHero } from "@/components/site/PageHero";
 import { FinalCTA } from "@/components/site/FinalCTA";
 import { api, type ApiData } from "@/lib/client";
+import { useI18n } from "@/lib/i18n";
 
 export default function AboutPage() {
   const [data, setData] = React.useState<ApiData>(null);
+  const { t } = useI18n();
 
   React.useEffect(() => {
     api("/api/public/site").then(setData).catch(() => {});
@@ -27,24 +30,27 @@ export default function AboutPage() {
 
   return (
     <>
+      <div className="relative h-72 overflow-hidden bg-night-950 sm:h-80">
+        <Image src="/images/team.jpg" alt="" fill sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night-950/80 via-night-950/40 to-night-950/20" />
+      </div>
       <PageHero
-        eyebrow="About Sri Mathru"
+        eyebrow={t("about.eyebrow")}
         title={
           <>
-            Bengaluru&apos;s modern driving school, run with{" "}
-            <span className="text-gradient">heart</span>.
+            {t("about.title1")} <span className="text-gradient">{t("about.title2")}</span>.
           </>
         }
-        subtitle="We started Sri Mathru Driving School with one belief: learning to drive should feel safe, simple and even fun. Today we run a fully automated school — live slot booking, progress tracking and certificates issued the moment you finish, all without paperwork."
+        subtitle={t("about.subtitle")}
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Users, value: `${stats.students}+`, label: "Students trained" },
-            { icon: Car, value: `${stats.instructors}`, label: "Certified instructors" },
-            { icon: CalendarCheck2, value: `${stats.lessonsCompleted}+`, label: "Lessons completed" },
-            { icon: Award, value: stats.rating.toFixed(1), label: "Average rating" },
+            { icon: Users, value: `${stats.students}+`, label: t("about.s1") },
+            { icon: Car, value: `${stats.instructors}`, label: t("about.s2") },
+            { icon: CalendarCheck2, value: `${stats.lessonsCompleted}+`, label: t("about.s3") },
+            { icon: Award, value: stats.rating.toFixed(1), label: t("about.s4") },
           ].map((s) => (
             <div key={s.label} className="card-shadow rounded-3xl border border-ink-100 bg-card p-6 text-center transition-all hover:-translate-y-1 hover:shadow-lg">
               <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400">
@@ -58,14 +64,14 @@ export default function AboutPage() {
 
         <div className="mt-16 grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <Eyebrow>Why students pick us</Eyebrow>
-            <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900">Automation that respects your time</h2>
+            <Eyebrow>{t("about.whyEyebrow")}</Eyebrow>
+            <h2 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900">{t("about.whyTitle")}</h2>
             <div className="mt-7 space-y-5">
               {[
-                { icon: Zap, title: "Book in 2 minutes", body: "Pick your course, see live availability, pay online. No phone tag." },
-                { icon: ShieldCheck, title: "Verified instructors only", body: "Police-verified, RTO-certified and continuously trained — with real student ratings." },
-                { icon: Sparkles, title: "Progress you can see", body: "Every lesson logs your skill scores. Watch yourself get better, chart included." },
-                { icon: HeartHandshake, title: "Female-friendly batches", body: "Dedicated female instructors and flexible batches, so everyone feels at home." },
+                { icon: Zap, title: t("about.w1t"), body: t("about.w1d") },
+                { icon: ShieldCheck, title: t("about.w2t"), body: t("about.w2d") },
+                { icon: Sparkles, title: t("about.w3t"), body: t("about.w3d") },
+                { icon: HeartHandshake, title: t("about.w4t"), body: t("about.w4d") },
               ].map((f) => (
                 <div key={f.title} className="group flex gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 transition group-hover:bg-brand-500 group-hover:text-white dark:text-brand-400">
@@ -84,7 +90,7 @@ export default function AboutPage() {
             <div className="bg-grid-dark absolute inset-0" aria-hidden />
             <div className="absolute -top-16 right-0 h-48 w-48 rounded-full bg-brand-500/20 blur-3xl" aria-hidden />
             <div className="relative">
-              <h3 className="font-display text-2xl font-bold text-white">What students say</h3>
+              <h3 className="font-display text-2xl font-bold text-white">{t("about.sayTitle")}</h3>
               <div className="mt-6 space-y-4">
                 {topReviews.map((r: ApiData) => (
                   <div key={r.id} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
@@ -100,8 +106,8 @@ export default function AboutPage() {
 
         <div className="card-shadow mt-16 rounded-3xl border border-ink-100 bg-card p-8 sm:p-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-bold text-ink-900">Our branches</h2>
-            <span className="text-sm text-ink-400">Open 6 AM – 8 PM, Mon–Sat</span>
+            <h2 className="font-display text-2xl font-bold text-ink-900">{t("about.branchesTitle")}</h2>
+            <span className="text-sm text-ink-400">{t("about.branchHours")}</span>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.settings.branches?.map((b: ApiData) => (

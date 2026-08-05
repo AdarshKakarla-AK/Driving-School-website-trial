@@ -4,18 +4,21 @@ import * as React from "react";
 import { Bot, X, Send, Loader2 } from "lucide-react";
 import { api, type ApiData } from "@/lib/client";
 import { formatINR } from "@/lib/utils";
+import { WA_NUMBER } from "@/lib/contact";
+import { useI18n } from "@/lib/i18n";
 
 interface Msg {
   from: "bot" | "user";
   text: string;
 }
 
-const QUICK = ["Course fees", "Timings", "Documents required", "Book a lesson", "Cancel a lesson", "Branches"];
+const QUICK = ["chat.quick1", "chat.quick2", "chat.quick3", "chat.quick4", "chat.quick5", "chat.quick6"];
 
 export function ChatWidget() {
+  const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
   const [msgs, setMsgs] = React.useState<Msg[]>([
-    { from: "bot", text: "Hi! 👋 I'm Sathi, Sri Mathru's AI assistant. Ask me about courses, fees, timings or booking — I'm here 24/7." },
+    { from: "bot", text: t("chat.greeting") },
   ]);
   const [input, setInput] = React.useState("");
   const [typing, setTyping] = React.useState(false);
@@ -51,7 +54,7 @@ export function ChatWidget() {
       return "We have 4+ certified instructors rated 4.7-4.9★, including female instructors. You can view their profiles and even request a specific instructor when booking.";
     }
     if (/(contact|call|phone|whatsapp|number)/.test(t)) {
-      return `You can reach us at ${settings.phone} or WhatsApp the same number. Or drop your number on the contact form and we'll call you within 24 hours.`;
+      return `You can reach us at ${settings.phone} or WhatsApp the same number at +${WA_NUMBER}. Or drop your number on the contact form and we'll call you within 24 hours.`;
     }
     return "I can help with courses & fees, timings, documents, booking, cancellation, branches and contact info. Try one of those, or talk to a human via WhatsApp anytime!";
   }, []);
@@ -73,14 +76,14 @@ export function ChatWidget() {
         <button
           onClick={() => setOpen(true)}
           className="no-print fixed bottom-24 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-xl transition hover:scale-105 lg:bottom-5"
-          aria-label="Open AI assistant"
+          aria-label={t("chat.open")}
         >
           <Bot className="size-7" />
         </button>
       )}
 
       {open && (
-        <div className="no-print fixed bottom-24 right-5 z-50 flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-3xl bg-card shadow-2xl ring-1 ring-ink-100 lg:bottom-5">
+        <div className="no-print fixed bottom-24 right-5 z-50 flex h-[70vh] min-h-[380px] max-h-[600px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-3xl bg-card shadow-2xl ring-1 ring-ink-100 lg:bottom-5">
           <div className="flex items-center justify-between bg-night-900 px-4 py-3 text-white">
             <div className="flex items-center gap-3">
               <div className="relative flex size-9 items-center justify-center rounded-full bg-gradient-to-b from-brand-400 to-brand-600">
@@ -88,8 +91,8 @@ export function ChatWidget() {
                 <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-night-900 bg-go-500" />
               </div>
               <div>
-                <p className="text-sm font-bold">Sathi — AI Assistant</p>
-                <p className="text-xs text-white/50">Online · replies instantly</p>
+                <p className="text-sm font-bold">{t("chat.header")}</p>
+                <p className="text-xs text-white/50">{t("chat.online")}</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white">
@@ -121,8 +124,8 @@ export function ChatWidget() {
           <div className="border-t border-ink-100 bg-card p-3">
             <div className="mb-2 flex flex-wrap gap-1.5">
               {QUICK.map((q) => (
-                <button key={q} onClick={() => send(q)} className="rounded-full border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-medium text-ink-600 hover:border-brand-400 hover:text-brand-600 dark:text-ink-200">
-                  {q}
+                <button key={q} onClick={() => send(t(q))} className="rounded-full border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-medium text-ink-600 hover:border-brand-400 hover:text-brand-600 dark:text-ink-200">
+                  {t(q)}
                 </button>
               ))}
             </div>
@@ -136,10 +139,10 @@ export function ChatWidget() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about fees, timings..."
+                placeholder={t("chat.placeholder")}
                 className="h-10 flex-1 rounded-xl border border-ink-200 bg-card px-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-400 focus:outline-none"
               />
-              <button type="submit" className="flex size-10 items-center justify-center rounded-xl bg-night-900 text-white hover:bg-night-800" aria-label="Send">
+              <button type="submit" className="flex size-10 items-center justify-center rounded-xl bg-night-900 text-white hover:bg-night-800" aria-label={t("chat.send")}>
                 <Send className="size-4" />
               </button>
             </form>
